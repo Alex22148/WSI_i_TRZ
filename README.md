@@ -19,8 +19,13 @@ Czujniki, które są używane to:
 
 czujnik orientacji BNO085 - wymaga instalacji
 
+
+# Laboratorium 2 - markery ArUco i nawigacja wizyjna
+
+instalacja bibliotek
+
 ```bash
-  pip3 install adafruit-circuitpython-bno08x
+  pip install -r requirements.txt
 ```
 
 
