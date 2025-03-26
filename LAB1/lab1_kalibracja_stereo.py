@@ -31,7 +31,6 @@ def calib_stereo():
     objpoints = []  # Punkty w przestrzeni rzeczywistej
     imgpointsL = []  # Punkty na obrazach lewej kamery
     imgpointsR = []  # Punkty na obrazach prawej kamery
-
     cat = []
     for filenameL, filenameR in zip(images_left, images_right):
         print(filenameL,filenameR)

@@ -2,11 +2,22 @@ import cv2, time
 import numpy as np
 from cv2 import aruco
 import json
-from lbiio_json import getJsonObjFromFile,writeJson2file
+from LAB1.lbiio_json import getJsonObjFromFile,writeJson2file
 from scipy import linalg
 from scipy.spatial.transform import Rotation
 import glob
 from json import JSONEncoder
+import math
+
+def distance_2_3d_points(p_3d_1, p_3d_2):
+    x1,y1,z1 = p_3d_1[0],p_3d_1[1],p_3d_1[2]
+    x2, y2, z2 = p_3d_2[0], p_3d_2[1], p_3d_2[2]
+    d = math.sqrt(math.pow(x2 - x1, 2) +
+                  math.pow(y2 - y1, 2) +
+                  math.pow(z2 - z1, 2) * 1.0)
+    print("Distance is ")
+    print(d)
+    return d
 
 
 
