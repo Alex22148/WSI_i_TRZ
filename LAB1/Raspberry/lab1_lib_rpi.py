@@ -1,7 +1,7 @@
+import json
 import os
 import cv2
 import numpy as np
-import json
 import plotly.graph_objects as go
 
 
@@ -209,5 +209,55 @@ def plot_bar_comparison(imagefiles1, reprojectionerrors1, imagefiles2, reproject
     # Wyświetlanie wykresu
     return fig
 
+def calib_single_camera_popr(image_folder,name, chessboard_size=(5, 8), square_size=25):
+    # Przygotowanie punktów 3D szachownicy
+    objp = np.zeros((chessboard_size[0] * chessboard_size[1], 3), np.float32)
+    objp[:, :2] = np.mgrid[0:chessboard_size[0], 0:chessboard_size[1]].T.reshape(-1, 2)
+    objp *= square_size  # Skalowanie do rzeczywistego rozmiaru
 
+    objpoints = []  # Punkty w przestrzeni rzeczywistej
+    imgpoints = []  # Punkty na obrazach
+    images = os.listdir(image_folder)
+
+    # Przechodzimy po obrazach w folderze
+    calibration_data = {"images": []}
+    for filename in images:
+        img_path = os.path.join(image_folder, filename)
+        img = cv2.imread(img_path)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        ret, corners = cv2.findChessboardCorners(gray, chessboard_size, None)
+
+        if ret:
+            # Ważna operacja: skalowanie współrzędnych narożników
+            corners[:, :, 0] *= 2
+
+            # Ważna operacja: zmiana rozmiaru obrazu
+            gray = cv2.resize(gray, (3280, 2464), interpolation=cv2.INTER_LINEAR)
+
+            objpoints.append(objp)
+            corners = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001))
+            imgpoints.append(corners)
+            calibration_data["images"].append({
+                "filename": filename,
+                "imagepoints": corners.tolist(),
+                "objectpoints": objp.tolist()
+            })
+
+    # Kalibracja kamery
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+    mtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, gray.shape[::-1], 1, gray.shape[::-1])
+
+    calibration_data.update({
+        "ret": ret,
+        "K": mtx.tolist(),
+        "D": dist.tolist(),
+        "rvecs": [r.tolist() for r in rvecs],
+        "tvecs": [t.tolist() for t in tvecs],
+        "square_size": square_size
+    })
+
+    with open(f"matrix_cam_{name}.json", "w") as write_file:
+        json.dump(calibration_data, write_file, cls=NumpyArrayEncoder, indent=4)
+
+    print(f"Kalibracja zakończona! Dane zapisane w matrix_cam_{name}.json")
 

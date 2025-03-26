@@ -9,6 +9,86 @@ import glob
 from json import JSONEncoder
 import math
 
+
+def load_camera_params(json_file):
+    """Wczytuje parametry kamery z pliku JSON."""
+    with open(json_file, "r") as file:
+        data = json.load(file)
+
+    # Parametry kamery
+    K = np.array(data["K"], dtype=np.float32)
+    D = np.array(data["D"], dtype=np.float32)
+    rvecs = [np.array(rvec, dtype=np.float32) for rvec in data["rvecs"]]
+    tvecs = [np.array(tvec, dtype=np.float32) for tvec in data["tvecs"]]
+    square_size = data["square_size"]
+
+    # Punkty kalibracyjne
+    objpoints = []
+    imgpoints = []
+    for img_data in data["images"]:
+        # Konwersja do np.float32
+        objpoints.append(np.array(img_data["objectpoints"], dtype=np.float32))
+        imgpoints.append(np.array(img_data["imagepoints"], dtype=np.float32))
+        print(len(objpoints))  # Liczba zdjęć w zbiorze dla lewej kamery
+    return K, D, objpoints, imgpoints, rvecs, tvecs, square_size
+
+
+def calib_stereo_from_jsons(json_cam1, json_cam2):
+    # Załadowanie parametrów z plików JSON
+    mtxL, distL, objpointsL, imgpointsL, rvecsL, tvecsL, square_sizeL = load_camera_params(json_cam1)
+    mtxR, distR, objpointsR, imgpointsR, rvecsR, tvecsR, square_sizeR = load_camera_params(json_cam2)
+
+    # Upewnij się, że oba zbiory mają te same zdjęcia
+    valid_indices = []
+    for i, (ptsL, ptsR) in enumerate(zip(imgpointsL, imgpointsR)):
+        if len(ptsL) > 0 and len(ptsR) > 0:  # Tylko jeśli oba zdjęcia mają wykryte punkty
+            valid_indices.append(i)
+
+    # Wybierz tylko zdjęcia z wykrytymi punktami dla obu kamer
+    objpointsL = [objpointsL[i] for i in valid_indices]
+    imgpointsL = [imgpointsL[i] for i in valid_indices]
+    objpointsR = [objpointsR[i] for i in valid_indices]
+    imgpointsR = [imgpointsR[i] for i in valid_indices]
+
+    # Sprawdzenie, czy liczba punktów dla obu kamer jest zgodna
+    assert len(objpointsL) == len(objpointsR), "Liczba zdjęć w zbiorach dla obu kamer musi być taka sama!"
+
+    # Ustalenie parametrów kalibracji
+    size = (3280, 2464)  # Rozmiar obrazu (przykładowo)
+    flags = cv2.CALIB_ZERO_TANGENT_DIST + cv2.CALIB_FIX_K4 + cv2.CALIB_FIX_K5 + cv2.CALIB_FIX_K6
+
+    # Stereo kalibracja
+    retS, mtxL, distL, mtxR, distR, R, T, E, F = cv2.stereoCalibrate(
+        objpointsL, imgpointsL, imgpointsR, mtxL, distL, mtxR, distR, size,
+        criteria=(cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 1e-6),
+        flags=flags
+    )
+
+    # Przeliczenie ogniskowych na mm
+    px = 1.12 / 1000  # Przykład przelicznika
+    print(f'ogniskowa f1x = {mtxL[0][0] * px}mm | f1y = {mtxL[1][1] * px}')
+    print(f'ogniskowa f2x = {mtxR[0][0] * px}mm | f2y = {mtxR[1][1] * px}')
+
+    # Zapisanie wyników do pliku JSON
+    jsonStruct = {
+        "retS": retS,
+        "K1": mtxL.tolist(),
+        "D1": distL.tolist(),
+        "K2": mtxR.tolist(),
+        "D2": distR.tolist(),
+        "R": R.tolist(),
+        "T": T.tolist(),
+        "E": E.tolist(),
+        "F": F.tolist(),
+        "rvecsL": [r.tolist() for r in rvecsL],
+        "rvecsR": [r.tolist() for r in rvecsR],
+        "square_size": square_sizeL
+    }
+
+    with open("matrix_stereo.json", "w") as write_file:
+        json.dump(jsonStruct, write_file, indent=4)
+
+
 def distance_2_3d_points(p_3d_1, p_3d_2):
     x1,y1,z1 = p_3d_1[0],p_3d_1[1],p_3d_1[2]
     x2, y2, z2 = p_3d_2[0], p_3d_2[1], p_3d_2[2]
