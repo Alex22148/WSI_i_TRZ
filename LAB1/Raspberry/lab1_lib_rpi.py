@@ -23,14 +23,48 @@ def getJsonObjFromFile(path):
     return jsonObj
 
 
-def show_corners(image, chessboard_size=(5, 8)):
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    ret, corners = cv2.findChessboardCorners(gray, chessboard_size, None)
-    if corners is not None and ret:
-        i = cv2.drawChessboardCorners(image, (8, 5), corners, ret)
-        return i
-    else:
-        return image
+def draw_corners(img, corners, ret):
+    corners[:, :, 0] *= 2
+    img_resized = cv2.resize(img, (3280, 2464), interpolation=cv2.INTER_LINEAR)
+    if ret:
+        for corner in corners:
+            x, y = int(corner[0][0]), int(corner[0][1])
+            cv2.circle(img_resized, (x, y), 10, (0, 0, 255), -1)  # Czerwone kropki, grubość -1 wypełnia koło
+        cv2.drawChessboardCorners(img_resized, (8, 5), corners, ret)  # Rysowanie bez przypisywania
+    return img_resized
+
+def images_checker(left_img_folder, right_img_folder, save_folder_left_img, save_folder_right_img):
+    for path_imgL, path_imgR in zip(os.listdir(left_img_folder), os.listdir(right_img_folder)):
+        imgL = cv2.imread(os.path.join(left_img_folder, path_imgL))
+        imgR = cv2.imread(os.path.join(right_img_folder, path_imgR))
+        is_L,is_R = imgL.copy(), imgR.copy()
+        grayL = cv2.cvtColor(imgL, cv2.COLOR_BGR2GRAY)
+        grayR = cv2.cvtColor(imgR, cv2.COLOR_BGR2GRAY)
+        retL, cornersL = cv2.findChessboardCorners(grayL, (8, 5), None)
+        retR, cornersR = cv2.findChessboardCorners(grayR, (8, 5), None)
+        iL = draw_corners(imgL, cornersL, retL) if retL else cv2.resize(imgL, (3280, 2464), interpolation=cv2.INTER_LINEAR)
+        iR = draw_corners(imgR, cornersR, retR) if retR else cv2.resize(imgR, (3280, 2464), interpolation=cv2.INTER_LINEAR)
+        cv2.putText(iL, f"Left: {retL}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 5, cv2.LINE_AA)
+        cv2.putText(iR, f"Right: {retR}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 5, cv2.LINE_AA)
+        combined = np.hstack((iL, iR))
+        combined_resized = cv2.resize(combined, (combined.shape[1] // 4, combined.shape[0] // 4), interpolation=cv2.INTER_AREA)
+        print("Press s to save the image for later analysis")
+        print()
+        print("Press d to move to the next image")
+        print()
+        print("Press q to quit")
+        while True:
+            cv2.imshow('Stereo Images', combined_resized)
+            key = cv2.waitKey(0) & 0xFF
+            if key == ord('s'):
+                cv2.imwrite(os.path.join(save_folder_left_img, path_imgL), is_L)
+                cv2.imwrite(os.path.join(save_folder_right_img, path_imgR), is_R)
+                print(f"images saved in {save_folder_left_img} and {save_folder_right_img}")
+            elif key == ord('d'):
+                break
+            elif key == ord('q'):
+                cv2.destroyAllWindows()
+                exit()
 
 
 def calibrate_single_camera(images_folder, camera_name):
