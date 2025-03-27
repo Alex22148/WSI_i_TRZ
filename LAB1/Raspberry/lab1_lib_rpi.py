@@ -34,37 +34,84 @@ def draw_corners(img, corners, ret):
     return img_resized
 
 def images_checker(left_img_folder, right_img_folder, save_folder_left_img, save_folder_right_img):
-    for path_imgL, path_imgR in zip(os.listdir(left_img_folder), os.listdir(right_img_folder)):
-        imgL = cv2.imread(os.path.join(left_img_folder, path_imgL))
-        imgR = cv2.imread(os.path.join(right_img_folder, path_imgR))
-        is_L,is_R = imgL.copy(), imgR.copy()
-        grayL = cv2.cvtColor(imgL, cv2.COLOR_BGR2GRAY)
-        grayR = cv2.cvtColor(imgR, cv2.COLOR_BGR2GRAY)
-        retL, cornersL = cv2.findChessboardCorners(grayL, (8, 5), None)
-        retR, cornersR = cv2.findChessboardCorners(grayR, (8, 5), None)
-        iL = draw_corners(imgL, cornersL, retL) if retL else cv2.resize(imgL, (3280, 2464), interpolation=cv2.INTER_LINEAR)
-        iR = draw_corners(imgR, cornersR, retR) if retR else cv2.resize(imgR, (3280, 2464), interpolation=cv2.INTER_LINEAR)
-        cv2.putText(iL, f"Left: {retL}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 5, cv2.LINE_AA)
-        cv2.putText(iR, f"Right: {retR}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 5, cv2.LINE_AA)
-        combined = np.hstack((iL, iR))
-        combined_resized = cv2.resize(combined, (combined.shape[1] // 4, combined.shape[0] // 4), interpolation=cv2.INTER_AREA)
-        print("Press s to save the image for later analysis")
-        print()
-        print("Press d to move to the next image")
-        print()
-        print("Press q to quit")
-        while True:
-            cv2.imshow('Stereo Images', combined_resized)
-            key = cv2.waitKey(0) & 0xFF
-            if key == ord('s'):
-                cv2.imwrite(os.path.join(save_folder_left_img, path_imgL), is_L)
-                cv2.imwrite(os.path.join(save_folder_right_img, path_imgR), is_R)
-                print(f"images saved in {save_folder_left_img} and {save_folder_right_img}")
-            elif key == ord('d'):
-                break
-            elif key == ord('q'):
-                cv2.destroyAllWindows()
-                exit()
+    import cv2
+    import numpy as np
+    import os
+    import gc
+
+    # Funkcja do rysowania narożników
+    def draw_corners(img, corners, ret):
+        img_resized = cv2.resize(img, (1280, 960), interpolation=cv2.INTER_LINEAR)  # Zmniejszenie obrazu
+        if ret:
+            cv2.drawChessboardCorners(img_resized, (8, 5), corners, ret)
+        return img_resized
+
+    def images_checker(left_img_folder, right_img_folder, save_folder_left_img, save_folder_right_img):
+        for path_imgL, path_imgR in zip(os.listdir(left_img_folder), os.listdir(right_img_folder)):
+            # Ładowanie obrazów
+            imgL = cv2.imread(os.path.join(left_img_folder, path_imgL))
+            imgR = cv2.imread(os.path.join(right_img_folder, path_imgR))
+
+            # Kopia obrazów do zapisu
+            is_L, is_R = imgL.copy(), imgR.copy()
+
+            # Przekształcenie na szarość
+            grayL = cv2.cvtColor(imgL, cv2.COLOR_BGR2GRAY)
+            grayR = cv2.cvtColor(imgR, cv2.COLOR_BGR2GRAY)
+
+            # Znalezienie narożników szachownicy
+            retL, cornersL = cv2.findChessboardCorners(grayL, (8, 5), None)
+            retR, cornersR = cv2.findChessboardCorners(grayR, (8, 5), None)
+
+            # Sprawdzamy, czy rogi zostały znalezione
+            if retL is not None and retR is not None:
+                # Rysowanie narożników (jeśli znalezione)
+                iL = draw_corners(imgL, cornersL, retL)
+                iR = draw_corners(imgR, cornersR, retR)
+
+                # Dodanie tekstu na obrazie
+                cv2.putText(iL, f"Left: {retL}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+                cv2.putText(iR, f"Right: {retR}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2, cv2.LINE_AA)
+
+            else:
+                # Jeśli rogi nie zostały wykryte, zwróć oryginalne zdjęcie
+                print(f"Chessboard corners not found for {path_imgL} and {path_imgR}. Returning original images.")
+                iL, iR = imgL, imgR  # Nie dokonujemy żadnych modyfikacji na obrazach
+
+            # Łączenie obrazów w poziomie
+            combined = np.hstack((iL, iR))
+
+            # Zmniejszenie obrazu przed wyświetleniem
+            combined_resized = cv2.resize(combined, (combined.shape[1] // 4, combined.shape[0] // 4),
+                                          interpolation=cv2.INTER_AREA)
+
+            # Wyświetlenie obrazu
+            print("Press 's' to save the image for later analysis")
+            print("Press 'd' to move to the next image")
+            print("Press 'q' to quit")
+
+            while True:
+                cv2.imshow('Stereo Images', combined_resized)
+
+                key = cv2.waitKey(1) & 0xFF  # Czekaj na klawisz (1 ms dla płynniejszego działania)
+
+                if key == ord('s'):
+                    # Zapisz obraz
+                    cv2.imwrite(os.path.join(save_folder_left_img, path_imgL), is_L)
+                    cv2.imwrite(os.path.join(save_folder_right_img, path_imgR), is_R)
+                    print(f"Images saved in {save_folder_left_img} and {save_folder_right_img}")
+                elif key == ord('d'):
+                    break  # Przejdź do kolejnego obrazu
+                elif key == ord('q'):
+                    cv2.destroyAllWindows()
+                    exit()  # Zakończ program
+
+                # Zwolnienie pamięci
+                del imgL, imgR, grayL, grayR, iL, iR, combined, combined_resized
+                gc.collect()  # Wymuszenie odśmiecania pamięci
+
+    # Przykład użycia funkcji
+    # images_checker('/path/to/left/images', '/path/to/right/images', '/path/to/save/left', '/path/to/save/right')
 
 
 def calibrate_single_camera(images_folder, camera_name):
