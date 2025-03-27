@@ -65,13 +65,23 @@ P_rawL,P_rawR = sortedRawPoints('camL.json','camR.json') # sortowanie punktów d
 
 powstały plik .json ma strukturę:
 
-```json lines
-{"coordinates": [[2516, 1704], [2312, 1718], [2114, 1730], [2474, 1476], [2276, 1492], [2084, 1509]], "ids": [63, 79, 46, 14, 67, 0]}
 
+```json lines
+{
+  "coordinates": [[x1,y1],[x2,y2]]
+  "ids": [id_1,id_2]
+}
 ```
 
-![Aruco IDs](Images/arucoL.jpg "example frame in IDs")
+<div align="center">
+  <img src="Images/arucoL.jpg" alt="Aruco IDs" title="example frame in IDs" width="300">
+</div>
 
+* Wczytanie parametrów stereo-kalibracji 
+
+```python calibData = calibDataFromFileJson('matrix_cam.json') # wczytanie macierzy kalibracyjnej
+points_Camera_3D = get3DpointsFrom2Ddata_full(calibData, P_rawL, P_rawR, type='list') #wyznaczenie punktów 3D w ukłądzie współrzędnych kamery```
+```
 * wyznaczenie punktów 3D rogów w układzie współrzednych kamery
 * 
 
