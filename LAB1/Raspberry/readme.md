@@ -20,19 +20,80 @@ lab1_lib_rpi.py
 ```
 🔎 Przed przystapieniem do ćwiczenia warto zapoznać się wstępnie jakie gotowe funkcjonalności są dostępne 
 ## Przechwytywanie ramek stereo
-Ramki są przechtywane w skrypcie głównym 
-```
-main_script.py 
-```
-## Wizualizacja wykrywanych rogów tablicy kalibracyjnej
+Przechwytywanie ramek w trybie live jest obsługiwane przez skrypt ```get_frame.py```
 
-⚠️
-Biblioteka zawiera funkcję ```show corners()```, która umożliwia na monitorowanie czy dla ustalonej
+* utworzenie katalogów do zapisu - jeśli nie zostały stworzone wcześniej
+Poniższe nazwy katalogów są przykładowe, proszę stworzyć własne nazwy zgodnie ze strukturą 
+* Stworzyć swój katalog z nazwą grupy i podgrupy
+```
+WSI_i_TRZ/LAB1/Raspberry/
+├── Raspberry
+│   ├── 01. get_frame.py
+│   ├── 02. table_veryfication.py
+│   ├── lab1_lib_rpi.py
+│   ├── main.py
+│   ├── readme.md`
+│   ├── requirements.txt   
+│   ├── grupa_podgrupa
+│   ├   ├── kalibracja 
+│   │   │    ├── right
+│   │   │    │   ├── 01.jpg
+│   │   │   │           
+│   │   │   │                
+│   │   │   │             
+│   │   │   ├── left
+│   │   │   ├── 01.jpg
+│   │   │   │           
+│   │   │   │                
+│   │   │   │ 
+│   │   │   ├── correct_left
+│   │   │   │   ├── 01.jpg
+│   │   │   │           
+│   │   │   │                
+│   │   │   │ 
+            ├── correct_right 
+                ├── 01.jpg
+│   │   │   │           
+│   │   │   │                
+│   │   │   │ 
+│   │   │   │           
+│   │   │   │                
+│   │   │   │ ├── cam_matrix_left.json
+│   │   │   │           
+│   │   │   │                
+│   │   │   │ ├── cam_matrix_left.json
+```
+
+* w skrypcie ```get_frame.py``` automatycznie zostana stworzone foldery o podanych nazwach. Należy zmienić na swoją nazwę!
+```
+if not os.path.exists('kalibracja/right'): 
+    os.makedirs('kalibracja/right')
+if not os.path.exists('kalibracja/left'): 
+    os.makedirs('kalibracja/left') 
+```
+Uruchomienie skryptu uruchomii stereokamere, której podgląd będzie można obserwować w trybie live. Zgodnie z opisaną instrukcją dot. zbierania zdjęć do kalibracjii kamery
+należy przechwycić ok. 30 stereo-par. 
+dla funkcji ```cv2.imwrite()``` należy podać ścieżkę taką analogiczną jak w utworzonych katalogach
+
+```aiignore
+    if key == ord('s'):  # Jeśli naciśniesz 's', zapisuje zdjęcie
+        licz+=1
+        filename = str(licz).zfill(2)+".jpg"
+        resized2 = cv2.resize(frame,(0,0),fx=2,fy=1)
+        h1,w1,_ = frame.shape
+        left_half = frame[:,:w1//2:]
+        right_half = frame[:,w1//2:]
+        cv2.imwrite("kalibracja/left/" + filename,left_half)
+        cv2.imwrite("kalibracja/right/" + filename,right_half)
+```
+### Wizualizacja wykrywanych rogów tablicy kalibracyjnej
+* do weryfikacji czy tablica oraz jej naroża zostały wykryte służy funkcja ```images_checker(left_img_dir, right_img_dir, save_dir_left, save_dir_right))```
+argumentami tej funkcji są ścieżki folderów do zebranych zdjęć oraz do folderów, gdzie będą zapisywane obrazy z poprawnym wykryciem naroży. 
+* ⚠️ funkcja ```images_checker()``` umożliwia na monitorowanie czy dla ustalonej
 pozycji kamery tablica kalibracyjna jest wykrywana poprawnie. Zdjęcia dla których nie zostaną
 wykryte rogi są **<span style="color:orange;">bezużyteczne</span>** do dalszych analiz.
 
-*Warto zebrać na poczatek ok. 30 zdjęć - ułatwi to dalsze analizy.*
-
+  
 ### Kalibracja pojedynczej kamery
 Stereo kalibracją jest połączenie dwóch skalibrowanych kamer, w bibliotece znajduje się plik do przeprowadzenia takiej kalibracji. Będzie to niezwykle przydatne dla dalszych obliczeń.
 Zachęcam do przeanalizowana kodu, który wykonuje kalibrację kamery.
