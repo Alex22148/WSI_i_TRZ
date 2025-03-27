@@ -64,10 +64,13 @@ P_rawL,P_rawR = sortedRawPoints('camL.json','camR.json') # sortowanie punktów d
 ```
 
 powstały plik .json ma strukturę:
-![MarineGEO circle logo](Images/arucoL.jpg "MarineGEO logo")
 
-![example]("Images/arucoL.jpg")
+```json lines
+{"coordinates": [[2516, 1704], [2312, 1718], [2114, 1730], [2474, 1476], [2276, 1492], [2084, 1509]], "ids": [63, 79, 46, 14, 67, 0]}
 
+```
+
+![Aruco IDs](Images/arucoL.jpg "example frame in IDs")
 
 * wyznaczenie punktów 3D rogów w układzie współrzednych kamery
 * 
