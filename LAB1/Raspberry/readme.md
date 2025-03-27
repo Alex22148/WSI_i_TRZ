@@ -256,5 +256,14 @@ Wartość błędu reprojekcji mówi, jak daleko średnio znajdują się rzeczywi
 ✅ Problemy z ostrością obrazu.<br>
 ✅ Duża dystorsja soczewki, której model nie opisuje dobrze.
 
-# 🎉 <span style="color:green;">Zadanie z wykorzystaniem Raspberry Pi można uznać za wykonane jeśli zebrane zdjęcia do stereo-kalibracji oraz powstałe macierze kamer, są dobrej jakości na podstawie powyższych kryteriów.
+## Ostatnim etapem zbierania danych jest rejestracja obrazów dla lewej i prawej kamery obiektów 2D i 3D.
+
+W tym celu ponownie należy użyć skryptu ```get_frame()``` *<span style="color:red;">ze zmienionymi nazwami katalogów* 
+np. punkty_3D - oddzielnie dla prawe i lewej kamery. Przechwycić pare klatek w różnych położeniach obiektów 
+
+
+
+
+## 🎉 <span style="color:green;">Zadanie z wykorzystaniem Raspberry Pi można uznać za wykonane jeśli zebrane zdjęcia do stereo-kalibracji oraz powstałe macierze kamer, są dobrej jakości na podstawie powyższych kryteriów. Zarejestrowano zdjęcia dla obiektów 3D
+
 
