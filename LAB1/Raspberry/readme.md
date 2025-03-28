@@ -93,6 +93,9 @@ argumentami tej funkcji są ścieżki folderów do zebranych zdjęć oraz do fol
 pozycji kamery tablica kalibracyjna jest wykrywana poprawnie. Zdjęcia dla których nie zostaną
 wykryte rogi są **<span style="color:orange;">bezużyteczne</span>** do dalszych analiz.
 
+<p align="center">
+  <img src="images/corners_stereo.jpg"/>
+</p>
   
 ### Kalibracja pojedynczej kamery
 Stereo kalibracją jest połączenie dwóch skalibrowanych kamer, w bibliotece znajduje się plik do przeprowadzenia takiej kalibracji. Będzie to niezwykle przydatne dla dalszych obliczeń.
@@ -108,29 +111,29 @@ Po kalibracji kamery, plik JSON zawiera dane, które opisują wyniki procesu. Po
   "images": [
     {
       "filename": "image1.jpg",
-      "imagepoints": [[x1, y1], [x2, y2], ...],
-      "objectpoints": [[x1, y1, z1], [x2, y2, z2], ...]
+      "imagepoints": [["x1", "y1"], ["x2", "y2"], "..."],
+      "objectpoints": [["x1", "y1", "z1"], ["x2", "y2", "z2"], "..."]
     },
     {
       "filename": "image2.jpg",
-      "imagepoints": [[x1, y1], [x2, y2], ...],
-      "objectpoints": [[x1, y1, z1], [x2, y2, z2], ...]
+      "imagepoints": [["x1", "y1"], ["x2", "y2"], "..."],
+      "objectpoints": [["x1", "y1", "z1"], ["x2", "y2", "z2"], "..."]
     }
   ],
   "ret": 1.0,
   "K": [
-    [fx, 0, cx],
-    [0, fy, cy],
+    ["fx", 0, "cx"],
+    [0, "fy", "cy"],
     [0, 0, 1]
   ],
-  "D": [k1, k2, p1, p2, k3],
+  "D": ["k1", "k2", "p1", "p2", "k3"],
   "rvecs": [
-    [rx1, ry1, rz1],
-    [rx2, ry2, rz2]
+    ["rx1", "ry1", "rz1"],
+    ["rx2", "ry2", "rz2"]
   ],
   "tvecs": [
-    [tx1, ty1, tz1],
-    [tx2, ty2, tz2]
+    ["tx1", "ty1", "tz1"],
+    ["tx2", "ty2", "tz2"]
   ],
   "square_size": 25
 }
