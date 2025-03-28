@@ -259,9 +259,21 @@ Wartość błędu reprojekcji mówi, jak daleko średnio znajdują się rzeczywi
 ## Ostatnim etapem zbierania danych jest rejestracja obrazów dla lewej i prawej kamery obiektów 2D i 3D.
 
 W tym celu ponownie należy użyć skryptu ```get_frame()``` *<span style="color:red;">ze zmienionymi nazwami katalogów* 
-np. punkty_3D - oddzielnie dla prawe i lewej kamery. Przechwycić pare klatek w różnych położeniach obiektów 
+np. punkty_3D - oddzielnie dla prawe i lewej kamery. Przechwycić pare klatek w różnych położeniach obiektów. 
+Przykładowe obrazy przedstawiono poniżej
 
+* markery ArUco 
+<p align="center">
+  <img src="images\resized_markerL.jpg" width="45%" />
+  <img src="images\resized_markerR.jpg" width="45%" />
+</p>
 
+* obiekt 3D
+
+<p align="center">
+  <img src="images\resized__36L.jpg" width="45%" />
+  <img src="images\resized__36R.jpg" width="45%" />
+</p>
 
 
 ## 🎉 <span style="color:green;">Zadanie z wykorzystaniem Raspberry Pi można uznać za wykonane jeśli zebrane zdjęcia do stereo-kalibracji oraz powstałe macierze kamer, są dobrej jakości na podstawie powyższych kryteriów. Zarejestrowano zdjęcia dla obiektów 3D
