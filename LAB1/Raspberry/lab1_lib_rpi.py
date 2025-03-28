@@ -175,7 +175,7 @@ def calculate_mean_error(errors):
     return np.mean(errors)
 
 
-def compute_reprojection_errors_from_json_final(json_file):
+def compute_reprojection_errors_from_json_final(json_file,images_folder):
     """
     Oblicza błędy reprojekcji dla wszystkich zdjęć na podstawie pliku JSON.
     Zwraca dwie listy: nazw plików i odpowiadające im błędy.
@@ -186,6 +186,7 @@ def compute_reprojection_errors_from_json_final(json_file):
     # Pobieranie macierzy kamery i dystorsji
     camera_matrix = np.array(data["K"])
     dist_coeffs = np.array(data["D"])
+    #dist_coeffs = np.zeros(5)
 
     # Listy na wyniki
     image_filenames = []
@@ -200,19 +201,26 @@ def compute_reprojection_errors_from_json_final(json_file):
 
         # Pobranie rvecs i tvecs dla tego zdjęcia
         rvecs = np.array(data["rvecs"][index], dtype=np.float32)
+        rotation_matrix, _ = cv2.Rodrigues(rvecs)
+        rvecs = rotation_matrix
         tvecs = np.array(data["tvecs"][index], dtype=np.float32)
 
         # Obliczenie reprojekcji
         projected_points, _ = cv2.projectPoints(objpoints, rvecs, tvecs, camera_matrix, dist_coeffs)
         projected_points = projected_points.reshape(-1, 2)
         imgpoints = imgpoints.reshape(-1, 2)
+        #print(f"Projected points: {projected_points.shape}")
+        #print(f"Image points: {imgpoints.shape}")
 
         # Obliczenie błędu reprojekcji
         error = np.linalg.norm(imgpoints - projected_points, axis=1).mean()
+        image_path = f"{images_folder}/{image_name}"
+        #draw_reprojection_points(image_path, objpoints, imgpoints, rvecs, tvecs, camera_matrix, dist_coeffs)
 
         # Dodanie do list
         image_filenames.append(image_name)
         reprojection_errors.append(error)
+
 
     return image_filenames, reprojection_errors
 
@@ -253,43 +261,6 @@ def reproj_errors_plot_bar(image_filenames, reprojection_errors):
 
     return fig
 
-
-def plot_bar_comparison(imagefiles1, reprojectionerrors1, imagefiles2, reprojectionerrors2):
-    # Indeks dla przesunięcia słupków
-    width = 0.4  # Szerokość słupków
-    # Tworzenie wykresu
-    fig = go.Figure()
-
-    # Dodanie słupków dla kamery 1
-    fig.add_trace(go.Bar(
-        x=np.arange(len(imagefiles1)) - width / 2,  # Przesunięcie na lewo
-        y=reprojectionerrors1,
-        name='Kamera 1',
-        marker_color='skyblue'
-    ))
-    # Dodanie słupków dla kamery 2
-    fig.add_trace(go.Bar(
-        x=np.arange(len(imagefiles2)) + width / 2,  # Przesunięcie na prawo
-        y=reprojectionerrors2,
-        name='Kamera 2',
-        marker_color='lightcoral'
-    ))
-
-    # Dodanie tytułów osi i wykresu
-    fig.update_layout(
-        title="Porównanie błędów reprojekcji dla dwóch kamer",
-        xaxis=dict(
-            tickvals=np.arange(len(imagefiles1)),
-            ticktext=imagefiles1,  # Nazwy zdjęć na osi X
-        ),
-        yaxis_title="Błąd reprojekcji",
-        xaxis_title="Zdjęcia",
-        showlegend=True
-    )
-
-    # Wyświetlanie wykresu
-    return fig
-
 def calib_single_camera_popr(image_folder,name, chessboard_size=(5, 8), square_size=25):
     # Przygotowanie punktów 3D szachownicy
     objp = np.zeros((chessboard_size[0] * chessboard_size[1], 3), np.float32)
@@ -316,6 +287,55 @@ def calib_single_camera_popr(image_folder,name, chessboard_size=(5, 8), square_s
             gray = cv2.resize(gray, (3280, 2464), interpolation=cv2.INTER_LINEAR)
 
             objpoints.append(objp)
+            corners = cv2.cornerSubPix(gray, corners, (6,6), (-1, -1), (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 50, 0.001))
+            imgpoints.append(corners)
+            calibration_data["images"].append({
+                "filename": filename,
+                "imagepoints": corners.tolist(),
+                "objectpoints": objp.tolist()
+            })
+
+    # Kalibracja kamery
+    ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+    #mtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, gray.shape[::-1], 1, gray.shape[::-1])
+
+    calibration_data.update({
+        "ret": ret,
+        "K": mtx.tolist(),
+        "D": dist.tolist(),
+        "rvecs": [r.tolist() for r in rvecs],
+        "tvecs": [t.tolist() for t in tvecs],
+        "square_size": square_size
+    })
+    px = 1.12 / 1000  # Przykład przelicznika
+    print(f'ogniskowa f1x = {mtx[0][0] * px}mm | f1y = {mtx[1][1] * px}')
+    with open(f"matrix_cam_{name}.json", "w") as write_file:
+        json.dump(calibration_data, write_file, cls=NumpyArrayEncoder, indent=4)
+
+    print(f"Kalibracja zakończona! Dane zapisane w matrix_cam_{name}.json")
+
+def calib_single_camera_bez_resize(image_folder,name, chessboard_size=(5, 8), square_size=25):
+    # Przygotowanie punktów 3D szachownicy
+    objp = np.zeros((chessboard_size[0] * chessboard_size[1], 3), np.float32)
+    objp[:, :2] = np.mgrid[0:chessboard_size[0], 0:chessboard_size[1]].T.reshape(-1, 2)
+    objp *= square_size  # Skalowanie do rzeczywistego rozmiaru
+
+    objpoints = []  # Punkty w przestrzeni rzeczywistej
+    imgpoints = []  # Punkty na obrazach
+    images = os.listdir(image_folder)
+
+    # Przechodzimy po obrazach w folderze
+    calibration_data = {"images": []}
+    for filename in images:
+        print(filename)
+        img_path = os.path.join(image_folder, filename)
+        img = cv2.imread(img_path)
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        ret, corners = cv2.findChessboardCorners(gray, chessboard_size, None)
+
+        if ret:
+            # Ważna operacja: skalowanie współrzędnych narożników
+            objpoints.append(objp)
             corners = cv2.cornerSubPix(gray, corners, (11, 11), (-1, -1), (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001))
             imgpoints.append(corners)
             calibration_data["images"].append({
@@ -327,6 +347,8 @@ def calib_single_camera_popr(image_folder,name, chessboard_size=(5, 8), square_s
     # Kalibracja kamery
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
     mtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, gray.shape[::-1], 1, gray.shape[::-1])
+    px = 1.12 / 1000  # Przykład przelicznika
+    print(f'ogniskowa f1x = {mtx[0][0] * px}mm | f1y = {mtx[1][1] * px}')
 
     calibration_data.update({
         "ret": ret,
@@ -342,3 +364,95 @@ def calib_single_camera_popr(image_folder,name, chessboard_size=(5, 8), square_s
 
     print(f"Kalibracja zakończona! Dane zapisane w matrix_cam_{name}.json")
 
+
+def draw_reprojection_points(image_path, objpoints, imgpoints, rvecs, tvecs, camera_matrix, dist_coeffs):
+    """
+    Funkcja rysuje punkty rzeczywiste i punkty wyliczone (reprojekcje) na obrazie.
+
+    :param image_path: Ścieżka do pliku obrazu, na którym mają być narysowane punkty.
+    :param objpoints: Punkty 3D w przestrzeni rzeczywistej.
+    :param imgpoints: Punkty 2D w przestrzeni obrazu (rzeczywiste).
+    :param rvecs: Wektory rotacji wyliczone podczas kalibracji kamery.
+    :param tvecs: Wektory translacji wyliczone podczas kalibracji kamery.
+    :param camera_matrix: Macierz kamery wyliczona podczas kalibracji.
+    :param dist_coeffs: Współczynniki dystorsji kamery.
+    """
+    # Wczytanie obrazu
+    image = cv2.imread(image_path)
+
+    # Obliczenie projekcji punktów 3D na 2D
+    projected_points, _ = cv2.projectPoints(objpoints, rvecs, tvecs, camera_matrix, dist_coeffs)
+    projected_points = projected_points.reshape(-1, 2)
+    image2 = cv2.resize(image, (3280,2464))
+    # Rysowanie punktów na obrazie
+    for obj_point, img_point, projected_point in zip(objpoints, imgpoints, projected_points):
+        # Rysowanie punktu rzeczywistego (obj_point) - czerwony
+        cv2.circle(image2, tuple(img_point.astype(int)), 5, (0, 0, 255), -1)  # Czerwony
+        # Rysowanie punktu wyliczonego (projected_point) - zielony
+        cv2.circle(image2, tuple(projected_point.astype(int)), 5, (0, 255, 0), -1)  # Zielony
+
+    # Pokazanie obrazu z narysowanymi punktami
+    i_r = cv2.resize(image2, None, fx=0.3, fy=0.3)
+    cv2.imshow('Reprojection Points', i_r)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def plot_bar_comparison(imagefiles1, reprojectionerrors1, imagefiles2, reprojectionerrors2):
+    # Indeks dla przesunięcia słupków
+    width = 0.4  # Szerokość słupków
+    # Tworzenie wykresu
+    fig = go.Figure()
+    avg_error1 = np.mean(reprojectionerrors1)
+    avg_error2 = np.mean(reprojectionerrors2)
+    # Dodanie słupków dla kamery 1
+    fig.add_trace(go.Bar(
+        x=np.arange(len(imagefiles1)) - width / 2,  # Przesunięcie na lewo
+        y=reprojectionerrors1,
+        name='Kamera 1',
+        marker_color='skyblue'
+    ))
+
+    # Dodanie słupków dla kamery 2
+    fig.add_trace(go.Bar(
+        x=np.arange(len(imagefiles2)) + width / 2,  # Przesunięcie na prawo
+        y=reprojectionerrors2,
+        name='Kamera 2',
+        marker_color='lightcoral'
+    ))
+
+    # Obliczanie średnich błędów reprojekcji
+    avg_error1 = np.mean(reprojectionerrors1)
+    avg_error2 = np.mean(reprojectionerrors2)
+
+    # Dodanie linii przerywanej dla średniego błędu kamery 1
+    fig.add_trace(go.Scatter(
+        x=[-0.5, len(imagefiles1)-0.5],  # Początek i koniec linii na osi X
+        y=[avg_error1, avg_error1],  # Stała wartość średniego błędu
+        mode='lines',
+        name=f'Sredni błąd Kamera 1: {avg_error1:.2f}',
+        line=dict(dash='dash', color='blue')
+    ))
+
+    # Dodanie linii przerywanej dla średniego błędu kamery 2
+    fig.add_trace(go.Scatter(
+        x=[-0.5, len(imagefiles1)-0.5],  # Początek i koniec linii na osi X
+        y=[avg_error2, avg_error2],  # Stała wartość średniego błędu
+        mode='lines',
+        name=f'Sredni błąd Kamera 2: {avg_error2:.2f}',
+        line=dict(dash='dash', color='red')
+    ))
+
+    # Dodanie tytułów osi i wykresu
+    fig.update_layout(
+        title="Porównanie błędów reprojekcji dla dwóch kamer",
+        xaxis=dict(
+            tickvals=np.arange(len(imagefiles1) + len(imagefiles2)),
+            ticktext=imagefiles1 + imagefiles2,  # Nazwy zdjęć na osi X
+        ),
+        yaxis_title="Błąd reprojekcji",
+        xaxis_title="Zdjęcia",
+        showlegend=True
+    )
+
+    # Wyświetlanie wykresu
+    fig.show()

@@ -178,6 +178,18 @@ możliwie najmniejszy błąd reprojekcji. Wykres słupkowy można wygerenować k
 * ```reproj_errors_plot_bar(errors, filenames)``` dla pojedynczej kamery
 * ```plot_bar_comparison(imagefiles1, reprojectionerrors1, imagefiles2, reprojectionerrors2)``` dla porównania dwóch kamer 
 
+Przykładowy wykresy
+* przed selekcją zdjęć
+
+<p align="center">
+  <img src="images\reproj_err_przed.jpg"/>
+</p>
+
+* po selekcji zdjęć
+
+<p align="center">
+  <img src="images\reproj_err.jpg"/>
+</p>
 
 **Wyjaśnienie dla ```reproj_errors_plot_bar(errors, filenames)```:** <br>
 
