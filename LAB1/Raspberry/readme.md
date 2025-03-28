@@ -25,44 +25,35 @@ Przechwytywanie ramek w trybie live jest obsługiwane przez skrypt ```get_frame.
 * utworzenie katalogów do zapisu - jeśli nie zostały stworzone wcześniej
 Poniższe nazwy katalogów są przykładowe, proszę stworzyć własne nazwy zgodnie ze strukturą 
 * Stworzyć swój katalog z nazwą grupy i podgrupy
-```
-WSI_i_TRZ/LAB1/Raspberry/
-├── Raspberry
-│   ├── 01. get_frame.py
-│   ├── 02. table_veryfication.py
-│   ├── lab1_lib_rpi.py
-│   ├── main.py
-│   ├── readme.md`
-│   ├── requirements.txt   
-│   ├── grupa_podgrupa
-│   ├   ├── kalibracja 
-│   │   │    ├── right
-│   │   │    │   ├── 01.jpg
-│   │   │   │           
-│   │   │   │                
-│   │   │   │             
-│   │   │   ├── left
-│   │   │   ├── 01.jpg
-│   │   │   │           
-│   │   │   │                
-│   │   │   │ 
-│   │   │   ├── correct_left
-│   │   │   │   ├── 01.jpg
-│   │   │   │           
-│   │   │   │                
-│   │   │   │ 
-            ├── correct_right 
-                ├── 01.jpg
-│   │   │   │           
-│   │   │   │                
-│   │   │   │ 
-│   │   │   │           
-│   │   │   │                
-│   │   │   │ ├── cam_matrix_left.json
-│   │   │   │           
-│   │   │   │                
-│   │   │   │ ├── cam_matrix_left.json
-```
+
+<!-- START_STRUCTURE -->
+
+# 📂 Wymagana struktura katalogów
+
+- 📁 `WX1S1_xyz`
+  - 📁 `kalibracja`
+    - 📁 `correct_left`
+    - 📁 `correct_right`
+    - 📁 `left`
+    - 📁 `right`
+  - 📄 `matrix_cam_left.json`
+  - 📄 `matrix_cam_right.json`
+  - 📁 `obiekty`
+    - 📁 `obiekt_2d`
+      - 📁 `left`
+      - 📁 `right`
+    - 📁 `obiekt_3d`
+      - 📁 `left`
+      - 📁 `right`
+- 🐍 `01.get_frame.py`
+- 🐍 `02.images_checker.py`
+- 🐍 `03.calib_err.py`
+- 🐍 `lab1_lib_rpi.py`
+- 📜 `readme.md`
+- 📝 `requirements.txt`
+- 
+
+<!-- END_STRUCTURE -->
 
 * w skrypcie ```get_frame.py``` automatycznie zostana stworzone foldery o podanych nazwach. Należy zmienić na swoją nazwę!
 ```
@@ -279,6 +270,10 @@ Przykładowe obrazy przedstawiono poniżej
 </p>
 
 
-## 🎉 <span style="color:green;">Zadanie z wykorzystaniem Raspberry Pi można uznać za wykonane jeśli zebrane zdjęcia do stereo-kalibracji oraz powstałe macierze kamer, są dobrej jakości na podstawie powyższych kryteriów. Zarejestrowano zdjęcia dla obiektów 3D
+# 🎉 <span style="color:green;">Zadanie z wykorzystaniem Raspberry Pi można uznać za wykonane jeśli:
+* zebrane zdjęcia do stereo-kalibracji oraz powstałe macierze kamer, są dobrej jakości na podstawie powyższych kryteriów, 
+* Zarejestrowano zdjęcia dla obiektów 3D
+
+
 
 
