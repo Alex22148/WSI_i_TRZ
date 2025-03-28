@@ -70,5 +70,3 @@ def images_checker(left_img_folder, right_img_folder, save_folder_left_img, save
                 exit()  # Zakończ program
 
             # Zwolnienie pamięci
-            del imgL, imgR, grayL, grayR, iL, iR, combined, combined_resized
-            gc.collect()  # Wymuszenie odśmiecania pamięci

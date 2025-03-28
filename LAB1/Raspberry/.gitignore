@@ -1,0 +1,25 @@
+# Ignorowanie katalogu venv (wirtualne środowisko)
+venv/
+.env
+
+# Ignorowanie plików cache Pythona
+__pycache__/
+*.py[cod]
+
+# Ignorowanie logów i plików tymczasowych
+*.log
+*.tmp
+*.swp
+
+# Ignorowanie ustawień PyCharm
+.idea/
+
+# Ignorowanie plików zależności
+*.csv
+*.sqlite3
+db.sqlite3
+
+# Ignorowanie konkretnych skryptów
+roboczy.py
+generate_files_structure.py
+images_checker.py
