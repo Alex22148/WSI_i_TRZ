@@ -228,10 +228,13 @@ l1,l2,points_world_3d = sorted_2d_3d_Points('camL.json','camR.json','3d_world_.j
 ## Funkcja `supplementary_data`
 
 Funkcja supplementary_data przetwarza dane kalibracyjne i przestrzenne, aby:
+
 ✅ Obliczyć macierze transformacji między układami współrzędnych (światowy ↔ kamera).
+
 ✅ Wyznaczyć pozycję i orientację kamer na podstawie punktów referencyjnych.
+
 ✅ Obliczyć odległości punktów od kamer.
----
+
 
 ### 1.  Obliczenie macierzy transformacji
 Funkcja wylicza dwie macierze transformacji:
@@ -357,8 +360,9 @@ Funkcje ```check_precision``` oraz ```supplementary_data``` umożliwiają genero
 Funkcja ```show_data_image``` przedstawia graficzną realizację przekształceń punktów 
 
 <p align="center">
-  <img src="images/punkty_triangulacja.jpg"/>
+  <img src="Images/punkty_triangulacja.jpg"/>
 </p>
+
 
 ### wizualizacja obliczania odległości między punktami w przestrzeni 
 
@@ -368,5 +372,5 @@ Funkcja ```draw_points_and_distances```
 * zwraca odległość między punktami w mm
 
 <p align="center">
-  <img src="images/stozki_odleglosc.jpg"/>
+  <img src="Images/stozki_odleglosc.jpg"/>
 </p>
