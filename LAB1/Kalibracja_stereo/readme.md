@@ -328,13 +328,15 @@ return T_WRL2CAM, T_CAM2WRL, r1, t1, r2, t2
 ✅ r2, t2 – Rotacja i translacja kamery prawej
 ```
 
-📌 Podsumowanie
-🔹 Konwertuje układy współrzędnych (świat ↔ kamera).
-🔹 Oblicza pozycję i orientację kamer na podstawie punktów odniesienia.
-🔹 Wylicza odległości punktów 3D od kamer.
-🔹 Zwraca kluczowe parametry transformacji, które mogą być użyte np. do rekonstrukcji 3D.
+**📌 Podsumowanie** 
 
-To kluczowa funkcja do analizy układu kamer w stereowizji i kalibracji! 🚀
+🔹 Konwertuje układy współrzędnych (świat ↔ kamera).
+
+🔹 Oblicza pozycję i orientację kamer na podstawie punktów odniesienia.
+
+🔹 Wylicza odległości punktów 3D od kamer.
+
+🔹 Zwraca kluczowe parametry transformacji, które mogą być użyte np. do rekonstrukcji 3D.
 
 ### Funkcja `check_precision`
 Funkcja `check_precision` sprawdza poprawność transformacji 2D-3D oraz 3D-2D, porównując uzyskane wyniki z wartościami oczekiwanymi. Na podstawie danych kalibracyjnych kamery oraz punktów 3D i 2D obliczane są różnice między wartościami obliczonymi a rzeczywistymi.
@@ -419,7 +421,7 @@ Zwraca points_check jako wynik działania funkcji.
             10.16584747044186,
             -2.157085101340499
         ]
-    }, ...
+    }
 ```
 ***Na podstawie tych danych można analitycznie wyznaczyć dokładność wykonanej kalibracji oraz analiz.***
 
