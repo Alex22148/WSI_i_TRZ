@@ -111,7 +111,7 @@ cv2.putText(image, label, (x + 10, y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255,
   <img src="Images\diff_ids.png" width=50%/>
 </p>
 
-```json lines
+```python
 {
   0: {'id': 0, 'marker_center': (288, 211), 'marker_dict': '4X4'}, 
   1: {'id': 0, 'marker_center': (429, 384), 'marker_dict': '5X5'}, 
