@@ -32,18 +32,18 @@ przykład wywołania funkcji:
 funkcja zwraca plik .json o strukturze:
 ```json lines
  jsonStruct = {
-        "retS": retS,
-        "K1": mtxL,
-        "D1": distL,
-        "K2": mtxR,
-        "D2": distR,
-        "R": R,
-        "T": T,
-        "E": E,
-        "F": F,
-        "rvecsL": [r.tolist() for r in rvecsL],
-        "rvecsR": [r.tolist() for r in rvecsR],
-        "square_size": square_sizeL
+        "retS": 'ret',
+        "K1": 'mtxL',
+        "D1": 'distL',
+        "K2": 'mtxR',
+        "D2": 'distR',
+        "R": 'R',
+        "T": 'T',
+        "E": 'E',
+        "F": 'F',
+        "rvecsL": '[r.tolist() for r in rvecsL]',
+        "rvecsR": '[r.tolist() for r in rvecsR]',
+        "square_size": 'square_sizeL'
     }
 ```
 * ***ret***	- Średni błąd reprojekcji (im mniejszy, tym lepiej)
@@ -78,10 +78,7 @@ P_rawL,P_rawR = sortedRawPoints('camL.json','camR.json') # sortowanie punktów d
 ### Ważność sortowania punktów po kluczu ID - ```sortedRawPoints```
 Ostatnia operacja sortowania punktów po kluczu ID jest kluczowa dla prawidłowej analizy danych. Aby wyniki obliczeń były wiarygodne, zestaw danych musi być uporządkowany. Posiadanie punktów homologicznych 2D oraz odpowiadających im punktów 3D w układzie współrzędnych kamery jest niezbędne do uzyskania poprawnych wyników.
 
-Dlaczego sortowanie jest ważne?<br>
-Homologiczne punkty 2D i ich odpowiadające punkty 3D muszą być właściwie sparowane. Każdy punkt 2D z kamery 1 musi mieć odpowiadający mu punkt 2D z kamery 2 oraz odpowiadający punkt w przestrzeni 3D. Jeśli te punkty nie będą poprawnie sparowane, wyniki triangulacji będą błędne i mogą prowadzić do nieprawidłowych obliczeń pozycji punktów w przestrzeni 3D.
-
-Porządek punktów: Jeśli punkty 2D z kamer 1 i 2, a także ich odpowiedniki w przestrzeni 3D, nie będą uporządkowane w ten sam sposób (tj. w tej samej kolejności), proces triangulacji będzie miał trudności z przypisaniem odpowiednich punktów między kamerami. Może to prowadzić do nieprawidłowych wyników, gdzie obliczone punkty 3D nie odpowiadają rzeczywistym pozycjom w przestrzeni.
+**Porządek punktów:** Jeśli punkty 2D z kamer 1 i 2, a także ich odpowiedniki w przestrzeni 3D, nie będą uporządkowane w ten sam sposób (tj. w tej samej kolejności), proces triangulacji będzie miał trudności z przypisaniem odpowiednich punktów między kamerami. Może to prowadzić do nieprawidłowych wyników, gdzie obliczone punkty 3D nie odpowiadają rzeczywistym pozycjom w przestrzeni.
 
 Kluczowe uwagi:<br>
 * Sprawdzanie zgodności punktów: Zawsze przed przystąpieniem do obliczeń należy upewnić się, że punkty homologiczne (2D) są poprawnie sparowane z ich odpowiednikami w przestrzeni 3D. Jest to szczególnie ważne w przypadku dużych zestawów danych, gdzie ręczne sprawdzenie każdego punktu może być trudne. Warto korzystać z odpowiednich narzędzi lub algorytmów, które umożliwiają automatyczne dopasowanie punktów po ID lub innym kluczu.
@@ -98,8 +95,8 @@ Powstały plik .json ma strukturę:
 
 ```json lines
 {
-  "coordinates": [[x1,y1],[x2,y2]],
-  "ids": [id_1,id_2]
+  "coordinates": [['x1','y1'],['x2','y2']]
+  "ids": ['id_1','id_2']
 }
 ```
 
@@ -123,7 +120,7 @@ Funkcja `points_3d_from_data` przekształca dwa zestawy punktów 2D (z lewej i p
 ---
 
 ### 1 **Pobranie parametrów kalibracji**
-```python
+```
 K1 = np.array(calib_object["K1"])  # Macierz wewnętrzna kamery 1
 D1 = np.array(calib_object["D1"])  # Współczynniki dystorsji kamery 1
 K2 = np.array(calib_object["K2"])  # Macierz wewnętrzna kamery 2
