@@ -1,11 +1,12 @@
 from lab1_lib import *
 
-json_cam1 = r'matrix_cam_left.json'
-json_cam2 = r'matrix_cam_right.json'
+json_cam1 = r'temp_files\matrix_cam_left.json'
+json_cam2 = r'temp_files\matrix_cam_right.json'
 
-calib_stereo_from_jsons(json_cam1, json_cam2)
+#calib_stereo_from_jsons(json_cam1, json_cam2)
 
-pathL,pathR = r"temp_files\marker_L.jpg",r"temp_files\marker_L.jpg"
+pathL,pathR = r"temp_files\marker_L.jpg",r"temp_files\marker_R.jpg"
+#pathL,pathR = r"F:\2025.03.06\markery_L\markery_36.jpg",r"F:\2025.03.06\markery_R\markery_36.jpg"
 
 imageL,imageR = cv2.imread(pathL), cv2.imread(pathR)
 # wykrycie lewych naroży markerów
