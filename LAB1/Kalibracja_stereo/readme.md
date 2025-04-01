@@ -19,6 +19,35 @@ lab1_lib_.py
 ```
 🔎 Przed przystapieniem do ćwiczenia warto zapoznać się wstępnie jakie gotowe funkcjonalności są dostępne 
 
+### Sprawdzenie dokładności punktów reprojekcji - `reprojection_errors_viewer.py`
+
+W skrypcie zaimplementowano prostą i intuicyjną strukturę umożliwiającą wizualną ocenę dokładności wyznaczania punktów reprojekcji. Obiektem testowym jest tablica kalibracyjna wykorzystywana podczas ćwiczenia.
+
+Punkty odnalezione za pomocą funkcji cv2.findChessboardCorners pełnią rolę referencyjnych (oznaczonych na czerwono). Natomiast markery zielone przedstawiają punkty odtworzone na podstawie reprojekcji, wykorzystującej macierz kalibracyjną uzyskaną we wcześniejszej części ćwiczenia.
+
+Funkcja wymaga trzech argumentów:
+
+* ścieżki do folderu zawierającego zdjęcia kalibracyjne,
+
+* pliku kalibracyjnego w formacie JSON,
+
+* nazwy zdjęcia przeznaczonego do analizy.
+
+Wynik jest wyświetlany przy użyciu biblioteki matplotlib, co umożliwia intuicyjne przybliżanie zaznaczonego obszaru. Warto skorzystać z tej funkcji, aby ułatwić ocenę rozmieszczenia punktów. 
+
+```python
+json_file,images_folder, image_filename = r"matrix_cam_left.json", r"select\left","_02.jpg"
+lib.compare_original_reprojected_points(json_file,images_folder, image_filename)
+```
+<div align="center">
+  <img src="Images\reprojected_point.jpg" alt="Calib_table" title="example frame in calibration_table" width="300">
+</div>
+
+<p align="center">
+  <img src="Images\reprojected_point_zoom.jpg" width="45%" />
+   <img src="Images\zoom_v2.png" width="45%" />
+
+</p>
 
 # 📇 Macierze kalibracyjne stereokamery
 Kalibracja kamer stereo w OpenCV na podstawie plików JSON z parametrami pojedynczych kamer
@@ -31,7 +60,6 @@ przykład wywołania funkcji:
 
 funkcja zwraca plik .json o strukturze:
 ```json
- "jsonStruct = 
 {
         "retS": "ret",
         "K1": "mtxL",
@@ -45,7 +73,7 @@ funkcja zwraca plik .json o strukturze:
         "rvecsL": "[r.tolist() for r in rvecsL]",
         "rvecsR": "[r.tolist() for r in rvecsR]",
         "square_size": "square_sizeL"
-    }"
+    }
 ```
 * ***ret***	- Średni błąd reprojekcji (im mniejszy, tym lepiej)
 * ***K1, K2*** - Macierze kamer (ogniskowa, punkt główny)
@@ -308,47 +336,94 @@ return T_WRL2CAM, T_CAM2WRL, r1, t1, r2, t2
 
 To kluczowa funkcja do analizy układu kamer w stereowizji i kalibracji! 🚀
 
-### Funkcja `check_presision`
-Funkcja `check_transformation` sprawdza poprawność transformacji 2D-3D oraz 3D-2D, porównując uzyskane wyniki z wartościami oczekiwanymi. Na podstawie danych kalibracyjnych kamery oraz punktów 3D i 2D obliczane są różnice między wartościami obliczonymi a rzeczywistymi.
+### Funkcja `check_precision`
+Funkcja `check_precision` sprawdza poprawność transformacji 2D-3D oraz 3D-2D, porównując uzyskane wyniki z wartościami oczekiwanymi. Na podstawie danych kalibracyjnych kamery oraz punktów 3D i 2D obliczane są różnice między wartościami obliczonymi a rzeczywistymi.
+
+Ta funkcja służy do kalibracji i transformacji współrzędnych punktów między obrazami (2D) a światem rzeczywistym (3D) w układzie stereowizyjnym. Wykorzystuje macierze kalibracyjne kamer oraz transformacje przestrzenne, aby przeprowadzić konwersję punktów między przestrzeniami.
+
+Działanie:
+
+* Rozpakowanie danych wejściowych:
+   - T_WRL2CAM, T_CAM2WRL, r1, t1, r2, t2 – transformacje i rotacje związane z kamerami i układem świata.
+
+   - sup_data – zbiór danych pomocniczych zawierających te wartości.
+
+* Wczytanie parametrów kalibracji kamer:
+
+   - K1, K2 – macierze wewnętrzne kamer.
+
+   - dist1, dist2 – współczynniki dystorsji kamer.
+
+   - R, T – macierz rotacji i wektor translacji między kamerami.
+
+* Konwersja punktów 2D do macierzy NumPy:
+
+   - p2d_left i p2d_right – punkty z obrazu lewego i prawego (ze stereowizji).
+
+* Przekształcenie punktów z 2D do 3D:
+
+`pkt_WRL = get_3DWorld_from_2DImage(...)` – funkcja ta rekonstruuje punkty w przestrzeni 3D na podstawie obrazów stereo.
+
+* Przekształcenie punktów z 3D do 2D:
+
+`pkt_IMG1, pkt_IMG2 = get_2DImage_from_3DWorld(...)`
+
+Funkcja przekształca współrzędne 3D na punkty obrazu dla kamer lewej i prawej.
+
+* Obliczanie błędów transformacji:
+
+* Oblicza różnice między oczekiwanymi wartościami a przekształconymi punktami.
+
+* Porównuje błędy dla przejścia z obrazu do świata 3D oraz ze świata 3D do obrazu.
+
+* Wyniki są wyrażone w milimetrach dla błędów przestrzennych oraz w pikselach dla błędów obrazowych.
+
+* Tworzenie słownika points_check z wynikami:
+
+* Zapisuje wartości oryginalne oraz przeliczone dla każdej pary punktów.
+
+**Zapis wyników do pliku JSON:**
+
+points_check.json zawiera zestawienie punktów wejściowych i wyjściowych oraz różnice między nimi.
+Zwraca points_check jako wynik działania funkcji.
 
 ---
-Działanie funkcji:
-1. **Wczytywanie danych kalibracyjnych:**
+ **Przykładowa paczka danych w pliku końcowym:** 
 
-   - Funkcja wczytuje dane kalibracyjne z pliku JSON, które zawierają macierze kamery, dystorsje, rotacje, translacje i macierze transformacji.
+```json lines 
+{
+    "data_1": {
+        "p2d_left_reference": [
+            2084.0,
+            1509.0
+        ],
+        "p2d_right_reference": [
+            2172.0,
+            1521.0
+        ],
+        "p2d_left_calculate": [
+            2087,
+            1510
+        ],
+        "p2d_right_calculate": [
+            2174,
+            1522
+        ],
+        "p3d_world_reference": [
+            9.6,
+            11.5,
+            0.0
+        ],
+        "p3d_world_calculate": [
+            7.570739903414122,
+            10.16584747044186,
+            -2.157085101340499
+        ]
+    }, ...
+```
+***Na podstawie tych danych można analitycznie wyznaczyć dokładność wykonanej kalibracji oraz analiz.***
 
-    - Wczytane dane są przekształcane na odpowiednie tablice NumPy.
-
-2. **Przygotowanie punktów wejściowych:**
-
-    - Funkcja przyjmuje punkty 3D (object_3d_point) oraz punkty 2D dla lewej i prawej kamery (P_rawL, P_rawR).
-
-    - Przekształca dane wejściowe na tablice NumPy, które będą użyte w dalszych obliczeniach.
-
-3. **Obliczanie punktów 3D z 2D:**
-
-    - Funkcja oblicza punkty 3D w układzie świata na podstawie punktów 2D z kamer oraz danych kalibracyjnych za pomocą funkcji get_3DWorld_from_2DImage.
-
-4. **Obliczanie punktów 2D z 3D:**
-
-    - Funkcja oblicza odwrotność operacji — oblicza punkty 2D na obrazach kamer na podstawie punktów 3D w układzie świata za pomocą funkcji get_2DImage_from_3DWorld.
-
-5. **Porównanie wyników:**
-
-    - Funkcja oblicza różnice pomiędzy rzeczywistymi punktami 3D a wyliczonymi punktami, a także pomiędzy punktami 2D wyliczonymi na podstawie 3D a oryginalnymi punktami 2D.
-
-    - Wyniki są wyświetlane na konsoli w jednostkach milimetrów (dla różnic w przestrzeni 3D) oraz pikselach (dla różnic w przestrzeni 2D).
-
-6. **Wyniki:**
-   - Funkcja zwraca różnice między rzeczywistymi a wyliczonymi punktami:
-
-    - Różnice w przestrzeni 3D (w mm):
-
-    **IMG > WRL - różnice między rzeczywistymi punktami 3D a obliczonymi.**
-
-    - Różnice w przestrzeni 2D (w px):
-
-    **WRL > IMG - różnice między punktami 2D obliczonymi na podstawie 3D a rzeczywistymi punktami 2D.**
+---
 
 ### 🔎Podsumowanie
 Funkcje ```check_precision``` oraz ```supplementary_data``` umożliwiają generowanie danych kalibracyjnych kamer stereo, obliczanie transformacji między układami koordynatów oraz sprawdzanie dokładności transformacji 3D-2D i 2D-3D. Dzięki nim można sprawdzić, czy obliczane punkty w przestrzeni 3D odpowiadają punktom 2D na obrazach kamer, co jest kluczowe przy analizie i weryfikacji wyników kalibracji kamery.
