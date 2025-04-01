@@ -2,7 +2,7 @@ import cv2, time
 import numpy as np
 from cv2 import aruco
 import json
-from LAB1.lbiio_json import getJsonObjFromFile,writeJson2file
+from lbiio_json import getJsonObjFromFile,writeJson2file
 from scipy import linalg
 from scipy.spatial.transform import Rotation
 import glob
@@ -34,42 +34,27 @@ def load_camera_params(json_file):
 
 
 def calib_stereo_from_jsons(json_cam1, json_cam2):
-    # Załadowanie parametrów z plików JSON
     mtxL, distL, objpointsL, imgpointsL, rvecsL, tvecsL, square_sizeL = load_camera_params(json_cam1)
     mtxR, distR, objpointsR, imgpointsR, rvecsR, tvecsR, square_sizeR = load_camera_params(json_cam2)
-
-    # Upewnij się, że oba zbiory mają te same zdjęcia
     valid_indices = []
     for i, (ptsL, ptsR) in enumerate(zip(imgpointsL, imgpointsR)):
         if len(ptsL) > 0 and len(ptsR) > 0:  # Tylko jeśli oba zdjęcia mają wykryte punkty
             valid_indices.append(i)
-
-    # Wybierz tylko zdjęcia z wykrytymi punktami dla obu kamer
     objpointsL = [objpointsL[i] for i in valid_indices]
     imgpointsL = [imgpointsL[i] for i in valid_indices]
     objpointsR = [objpointsR[i] for i in valid_indices]
     imgpointsR = [imgpointsR[i] for i in valid_indices]
-
-    # Sprawdzenie, czy liczba punktów dla obu kamer jest zgodna
     assert len(objpointsL) == len(objpointsR), "Liczba zdjęć w zbiorach dla obu kamer musi być taka sama!"
-
-    # Ustalenie parametrów kalibracji
     size = (3280, 2464)  # Rozmiar obrazu (przykładowo)
     flags = cv2.CALIB_ZERO_TANGENT_DIST + cv2.CALIB_FIX_K4 + cv2.CALIB_FIX_K5 + cv2.CALIB_FIX_K6
-
-    # Stereo kalibracja
     retS, mtxL, distL, mtxR, distR, R, T, E, F = cv2.stereoCalibrate(
         objpointsL, imgpointsL, imgpointsR, mtxL, distL, mtxR, distR, size,
         criteria=(cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 1e-6),
         flags=flags
     )
-
-    # Przeliczenie ogniskowych na mm
     px = 1.12 / 1000  # Przykład przelicznika
     print(f'ogniskowa f1x = {mtxL[0][0] * px}mm | f1y = {mtxL[1][1] * px}')
     print(f'ogniskowa f2x = {mtxR[0][0] * px}mm | f2y = {mtxR[1][1] * px}')
-
-    # Zapisanie wyników do pliku JSON
     jsonStruct = {
         "retS": retS,
         "K1": mtxL.tolist(),
@@ -156,12 +141,10 @@ def stereo_calib(chessboard_size, square_size, image_folderR, image_folderL):
                   "F": F, "rvecsL": rvecsL, "rvecsR": rvecsR,
                   "square_size": square_size}
 
-    with open("matrix_cam.json", "w") as write_file:
+    with open("../working_data_ignore/matrix_cam.json", "w") as write_file:
         json.dump(jsonStruct, write_file, cls=NumpyArrayEncoder)
 
     return jsonStruct
-
-
 
 def corners2center(corners,ids):
     for (markerCorner, markerID) in zip(corners, ids):
@@ -181,7 +164,6 @@ def corners2leftTop(corners,ids):
         cX,cY = (int(topLeft[0]), int(topLeft[1]))
 
     return cX, cY, markerID
-
 
 def auto_detect_aruco(image_path,image_show,position):
     try:
@@ -224,7 +206,6 @@ def auto_detect_aruco(image_path,image_show,position):
 
 
     return image, params,best_corners
-
 
 def camera_auto_detect_aruco(image):
     best_dict = None
@@ -283,9 +264,8 @@ def aruco_detect_left_corner(image):
             params.append(corners2leftTop(markerCorner, markerID))
         for X, Y, ID in params:
             cv2.circle(image, (X, Y), 4, (0, 0, 255), -1)
-            cv2.putText(image, str(ID), (X, Y - 100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5)
+            cv2.putText(image, str(ID), (X, Y - 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 3)
     return image, params
-
 
 def save_marker2json(params, json_filename):
     coordinates=[]
@@ -298,15 +278,16 @@ def save_marker2json(params, json_filename):
     with open(str(json_filename) + ".json", "w") as outfile:
         json.dump(jsonObject, outfile)
 
-def save_3d_WP(list_points,list_ids, filename):
-    coordinates=[]
-    ida=[]
-    for point_3d,ID in zip(list_points, list_ids):
-        x,y,z = point_3d
-        coordinates.append((x,y,z))
-        ida.append(int(ID))
-    jsonObject={"coordinates":coordinates,"ids":ida}
-    with open("3d_world_" + str(filename) + "_.json", "w") as outfile:
+
+
+def save_3d_WP(list_points, list_ids, filename):
+    # Tworzymy jednocześnie listy punktów 3D i odpowiadających im ID
+    jsonObject = {
+        "coordinates": [(float(x), float(y), float(z)) for (x, y, z) in list_points],
+        "ids": [int(ID) for ID in list_ids]
+    }
+    # Zapisujemy do pliku JSON
+    with open(f"3d_world_{filename}.json", "w") as outfile:
         json.dump(jsonObject, outfile)
 
 
@@ -362,15 +343,17 @@ def getPoints3D(uvs1, uvs2, P1, P2, type='list'):
     return p3ds
 
 
-def get3DpointsFrom2Ddata_full(calibData, listPoints2D_1, listPoints2D_2, type='list'):
-    CM1 = calibData[0]
-    CM2 = calibData[1]
-    R = calibData[4]
-    T = calibData[5]
+def points_3d_from_data(calibData, listPoints2D_1, listPoints2D_2, type='list'):
+    CM1 = calibData['K1']
+    CM2 = calibData['K2']
+    R = calibData['R']
+    T = calibData['T']
     uvs1, uvs2 = listImgPoints2array(listPoints2D_1, listPoints2D_2)
     P1, P2 = projectionMatrix(CM1, CM2, R, T)
     points3D = getPoints3D(uvs1, uvs2, P1, P2, type=type)
     return points3D
+
+
 
 
 def sortedRawPoints(path_points_2d_camL,path_points_2d_camR):
@@ -397,7 +380,7 @@ def sorted_2d_3d_Points(cam1_2d_point,cam2_2d_point,world_3d_point):
     list3 = [dict3[id] for id in common_ids]
     print(list3)
     jstr = {"camL":list1,"camR":list2,"world":list3,"ids":common_ids}
-    with open("sorted_2D_3D_points.json", "w") as write_file:
+    with open("../working_data_ignore/sorted_2D_3D_points.json", "w") as write_file:
         json.dump(jstr, write_file)
 
     return list1, list2,list3
@@ -433,9 +416,6 @@ def calculatePoseCameraInVisinSystem(P_3D_vs, Px_2D, CMx, distx):
     posCAMx_vs = camera_position.T
     r = Rotation.from_rotvec([rvect[0][0], rvect[1][0], rvect[2][0]])
     rot = r.as_euler('xyz', degrees=True)
-    # rx = round(180 - rot[0], 5)
-    # ry = round(rot[1], 5)
-    # rz = round(rot[2], 5)
     rotCAMx_vs = rot.copy()
     return val, rvect, tvect, posCAMx_vs, rotCAMx_vs
 
@@ -513,51 +493,241 @@ def get_2DImage_from_3DWorld(P_3D, rvect1, tvect1, rvect2, tvect2, CM1, dist1, C
     pkt_IMG2 = np.array(pkt_IMG2x, dtype=np.int64)
     return pkt_IMG1,pkt_IMG2
 
+def supplementary_data(points_camera_3d, p2d_left, p2d_right, points_world_3d, calibdata):
+    T_WRL2CAM = getTransformationMatrix_WRL2CAM(points_world_3d, points_camera_3d)
+    T_CAM2WRL = getTransformationMatrix_CAM2WRL(points_camera_3d, points_world_3d)
+    K1 = np.array(calibdata['K1'])
+    K2 = np.array(calibdata['K2'])
+    dist1 = np.array(calibdata['D1'])
+    dist2 = np.array(calibdata['D2'])
+    points_camera_3d = np.array(points_camera_3d, dtype=np.float32)
+    p2d_left = np.array(p2d_left, dtype=np.float32)
+    p2d_right = np.array(p2d_right, dtype=np.float32)
+    # Obliczanie pozycji kamer w systemie wizualnym
+    val, r1, t1, posCAM1_vs, rotCAM1_vs = calculatePoseCameraInVisinSystem(points_camera_3d, p2d_left, K1, dist1)
+    val, r2, t2, posCAM2_vs, rotCAM2_vs = calculatePoseCameraInVisinSystem(points_camera_3d, p2d_right, K2, dist2)
+    print(f'wektor obrotu kamery lewej {rotCAM1_vs} ')
+    print(f'wektor obrotu kamery prawej {rotCAM2_vs} ')
+    # Obliczanie odległości
+    dCAM1_vs = calculate_distances(posCAM1_vs, points_camera_3d)
+    dCAM2_vs = calculate_distances(posCAM2_vs, points_camera_3d)
+    print(f'odległość punktu od kamery lewej {dCAM1_vs} mm')
+    print(f'odległość punktu od kamery prawej {dCAM2_vs} mm')
+    return T_WRL2CAM,T_CAM2WRL, r1, t1, r2, t2
 
-def createCalibJson(points_Camera_3D,P1_raw,P2_raw, p_3D_world,calibData):
-    points_World_3D = np.array(p_3D_world)
+def check_precision(calibdata,sup_data,p2d_left, p2d_right, points_world_3d):
+    T_WRL2CAM, T_CAM2WRL, r1, t1, r2, t2 = sup_data
+    K1 = np.array(calibdata['K1'])
+    K2 = np.array(calibdata['K2'])
+    dist1 = np.array(calibdata['D1'])
+    dist2 = np.array(calibdata['D2'])
+    R = np.array(calibdata['R'])
+    T = np.array(calibdata['T'])
+    p2d_left = np.array(p2d_left, dtype=np.float32)
+    p2d_right = np.array(p2d_right, dtype=np.float32)
+    print(f'przed get p1 {p2d_left.shape} K1 {K1.shape}, R {R.shape}, T {T.shape}, T_CAM2WRL {T_CAM2WRL.shape}')
+    pkt_WRL = get_3DWorld_from_2DImage(p2d_left, p2d_right, K1, K2, R, T, T_CAM2WRL)
+    points_world_3d = np.array(points_world_3d)
+    pkt_IMG1, pkt_IMG2 = get_2DImage_from_3DWorld(points_world_3d, r1, t1, r2, t2, K1, dist1, K2, dist2, T_WRL2CAM)
+    points_check ={}
+    for i in range(len(p2d_left)):
+        print('IMG > WRL - różnice względem wartości oczekiwanej w [mm]:')
+        print(pkt_WRL[i] - points_world_3d[i])
+        print('WRL > IMG - różnice względem wartości oczekiwanej w [px]:')
+        print(f' kamera lewa {pkt_IMG1[i] - p2d_left[i]} dla punktu {p2d_left[i]}')
+        print(f' kamera prawa {pkt_IMG2[i] - p2d_right[i]} dla punktu {p2d_right[i]}')
+        print("===========")
+        print(p2d_left[i])
+        dat = f"data_{i+1}"
+        points_check[dat] = {
+            "p2d_left_reference": p2d_left[i].tolist(),
+            "p2d_right_reference": p2d_left[i].tolist(),
+            "p2d_left_calculate": pkt_IMG1[i].tolist(),
+            "p2d_right_calculate": pkt_IMG2[i].tolist(),
+            "p3d_world_reference": points_world_3d[i].tolist(),
+            "p3d_world_calculate": pkt_WRL[i].tolist()
+        }
+    print(points_check)
+    with open('points_check.json', "w", encoding="utf-8") as file:
+        json.dump(points_check, file, indent=4)
+    return points_check
+
+def show_data_image(p2d_left,p2d_right,p2d_left_calculated,p2d_right_calculated, img_left, img_right,save_images):
+    point_numbers = range(1, len(p2d_left_calculated) + 1)
+    # Nanosi numery różnic na obrazy
+    for i, (p1, p2, p11, p22) in enumerate(zip(p2d_left,p2d_right,p2d_left_calculated,p2d_right_calculated)):
+        x1, y1 = int(p1[0] / 2), int(p1[1])
+        x2, y2 = int(p2[0] / 2), int(p2[1])
+        x11, y11 = int(p11[0] / 2), int(p11[1])
+        x22, y22 = int(p22[0] / 2), int(p22[1])
+        print(x1, y1)
+        # Naniesienie różnic na obraz lewej kamery
+        text_left = f"{point_numbers[i]}"
+        cv2.putText(img_left, text_left, (x1, y1 - 25), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 255), 3)
+        img_left = cv2.circle(img_left, (x1, y1), 10, (0, 255, 0), 2)  # Narysowanie punktu na obrazie lewej kamery
+        img_left = cv2.circle(img_left, (x11, y11), 5, (0, 0, 255), -1)  # Narysowanie punktu na obrazie lewej kamery
+
+        # Naniesienie różnic na obraz prawej kamery
+        text_right = f"{point_numbers[i]}"
+        cv2.putText(img_right, text_right, (x2, y2 - 25), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 255), 3)
+        cv2.circle(img_right, (x2, y2), 10, (0, 255, 0), 2)  # Narysowanie punktu na obrazie prawej kamery
+        cv2.circle(img_right, (x22, y22), 5, (0, 0, 255), -1)  # Narysowanie punktu na obrazie prawej kamery
+
+    imgL = cv2.resize(img_left, (3280, 2464), interpolation=cv2.INTER_LINEAR)
+    imgR = cv2.resize(img_right, (3280, 2464), interpolation=cv2.INTER_LINEAR)
+    if save_images:
+        cv2.imwrite("Images/image_left.jpg", imgL)
+        cv2.imwrite("Images/image_right.jpg", imgR)
+
+    # Wyświetlenie obrazów z naniesionymi punktami
+    img_left_resized = cv2.resize(imgL, (0, 0), fx=0.25, fy=0.25)
+    img_right_resized = cv2.resize(imgR, (0, 0), fx=0.25, fy=0.25)
+    combined_img = np.hstack((img_left_resized, img_right_resized))
+    cv2.imshow("Combined Image", combined_img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+def calculated_points_2d(points_world_3d,sup_data,calibdata):
+    T_WRL2CAM, T_CAM2WRL, r1, t1, r2, t2 = sup_data
+    K1 = np.array(calibdata['K1'])
+    K2 = np.array(calibdata['K2'])
+    dist1 = np.array(calibdata['D1'])
+    dist2 = np.array(calibdata['D2'])
+    points_world_3d = np.array(points_world_3d)
+    pkt_IMG1, pkt_IMG2 = get_2DImage_from_3DWorld(points_world_3d, r1, t1, r2, t2, K1, dist1, K2, dist2, T_WRL2CAM)
+    return pkt_IMG1, pkt_IMG2
+
+def draw_points_and_distances(points_left, points_right, img_left, img_right, stereo_matrix_object):
+    # Obliczanie punktów 3D na podstawie punktów 2D
+    points_3d = points_3d_from_data(stereo_matrix_object, points_left, points_right, type='list')
+    # Kopia obrazów do rysowania
+    img_left_copy = img_left.copy()
+    img_right_copy = img_right.copy()
+    # Kolory dla punktów i linii
+    color= (0, 0, 255)  # Czerwony dla punktów
+    # Rysowanie punktów i linii na obrazach
+    for i in range(len(points_left)):
+        pl=points_left[i]
+        pr=points_right[i]
+        x1, y1 = int(pl[0]), int(pl[1])
+        x2, y2 = int(pr[0]), int(pr[1])
+        cv2.circle(img_left_copy, (x1,y1), 5, color, -1)
+        cv2.circle(img_right_copy, (x2,y2), 5, color, -1)
+        if i > 0:
+            # Odległość w 3D między kolejnymi punktami
+            dist = distance_2_3d_points(points_3d[i - 1], points_3d[i])
+
+            # Rysowanie linii na obrazach
+            cv2.line(img_left_copy, tuple(points_left[i - 1]), tuple(points_left[i]), color, 2)
+            cv2.line(img_right_copy, tuple(points_right[i - 1]), tuple(points_right[i]), color, 2)
+
+            # Wyświetlenie odległości na obrazie
+            mid_left = (
+            (points_left[i - 1][0] + points_left[i][0]) // 2, (points_left[i - 1][1] + points_left[i][1]) // 2)
+            mid_right = (
+            (points_right[i - 1][0] + points_right[i][0]) // 2, (points_right[i - 1][1] + points_right[i][1]) // 2)
+            cv2.putText(img_left_copy, f"{dist:.2f} mm", mid_left, cv2.FONT_HERSHEY_SIMPLEX, 3, color, 3)
+            cv2.putText(img_right_copy, f"{dist:.2f} mm", mid_right, cv2.FONT_HERSHEY_SIMPLEX, 3, color, 3)
+
+    # Skalowanie obrazów (4x mniejsze)
+    img_left_copy = cv2.resize(img_left_copy, (3280, 2464), interpolation=cv2.INTER_LINEAR)
+    img_right_copy = cv2.resize(img_right_copy, (3280, 2464), interpolation=cv2.INTER_LINEAR)
+    cv2.imwrite('Images/cone_L.jpg', img_left_copy)
+    cv2.imwrite('Images/cone_R.jpg', img_right_copy)
+    img_left_resized = cv2.resize(img_left_copy, (0, 0), fx=0.25, fy=0.25)
+    img_right_resized = cv2.resize(img_right_copy, (0, 0), fx=0.25, fy=0.25)
+
+    # Połączenie obrazów w jeden (obok siebie)
+    combined_img = np.hstack((img_left_resized, img_right_resized))
+    # Wyświetlenie obrazu
+    cv2.imshow("Stereo View", combined_img)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+    return img_left_copy,img_right_copy
+
+
+
+def create_calib_json(points_Camera_3D, P1_raw, P2_raw, points_World_3D, calibData):
+    # Przekształcenie punktów świata do typu NumPy
+    #points_World_3D = np.array(p_3D_world)
+    points_World_3D, points_Camera_3D = np.array(points_World_3D), np.array(points_Camera_3D)
+    print("=====================")
+    points_Camera_3D.reshape(6, 3), points_World_3D.reshape(6, 3)
+    print(points_World_3D.shape, points_Camera_3D.shape)
+    # Obliczanie macierzy transformacji
     T_WRL2CAM = getTransformationMatrix_WRL2CAM(points_World_3D, points_Camera_3D)
     T_CAM2WRL = getTransformationMatrix_CAM2WRL(points_Camera_3D, points_World_3D)
-    CM1, CM2, dist1, dist2, R, T, F, E = calibData[0], calibData[1], calibData[2], calibData[3], calibData[4],calibData[5], calibData[6], calibData[7]
-    points_Camera_3D = np.array(points_Camera_3D)
+    CM1 = np.array(calibData['K1'])
+    CM2 = np.array(calibData['K2'])
+    dist1 = np.array(calibData['D1'])
+    dist2 = np.array(calibData['D2'])
+    R = np.array(calibData['R'])
+    T = np.array(calibData['T'])
+    # Rozpakowanie danych kalibracyjnych
+    #CM1, CM2, dist1, dist2, R, T, F, E = calibData
 
-    points_Camera_3D, P1_raw, CM1, dist1 = points_Camera_3D.astype('float32'), np.array(P1_raw).astype('float32'), CM1.astype(
-        'float32'), dist1.astype('float32')
-    P2_raw, CM2, dist2 = np.array(P2_raw).astype('float32'), CM2.astype('float32'), dist2.astype('float32')
+    # Konwersja danych wejściowych do typu float32
+    points_Camera_3D = np.array(points_Camera_3D, dtype=np.float32)
+    P1_raw = np.array(P1_raw, dtype=np.float32)
+    P2_raw = np.array(P2_raw, dtype=np.float32)
+
+    # Obliczanie pozycji kamer w systemie wizualnym
     val, r1, t1, posCAM1_vs, rotCAM1_vs = calculatePoseCameraInVisinSystem(points_Camera_3D, P1_raw, CM1, dist1)
     val, r2, t2, posCAM2_vs, rotCAM2_vs = calculatePoseCameraInVisinSystem(points_Camera_3D, P2_raw, CM2, dist2)
+
+    # Obliczanie odległości
     dCAM1_vs = calculate_distances(posCAM1_vs, points_Camera_3D)
     dCAM2_vs = calculate_distances(posCAM2_vs, points_Camera_3D)
-    jsonCALIBout = {'K1': CM1.tolist(),
-                    'K2': CM2.tolist(),
-                    'D1': dist1.tolist(),
-                    'D2': dist2.tolist(),
-                    'R': R.tolist(),
-                    'T': T.tolist(),
-                    'E': E.tolist(),
-                    'F': F.tolist(),
-                    'r1': r1.tolist(),
-                    't1': t1.tolist(),
-                    'r2': r2.tolist(),
-                    't2': t2.tolist(),
-                    'C2W': T_CAM2WRL.tolist(),
-                    'W2C': T_WRL2CAM.tolist()}
-    file_name_calib = 'calibration_data.json'
+
+    # Tworzenie słownika z wynikami kalibracji
+    jsonCALIBout = {
+        'K1': CM1.tolist(),
+        'K2': CM2.tolist(),
+        'D1': dist1.tolist(),
+        'D2': dist2.tolist(),
+        'R': R.tolist(),
+        'T': T.tolist(),
+        #'E': E.tolist(),
+        #'F': F.tolist(),
+        'r1': r1.tolist(),
+        't1': t1.tolist(),
+        'r2': r2.tolist(),
+        't2': t2.tolist(),
+        'C2W': T_CAM2WRL.tolist(),
+        'W2C': T_WRL2CAM.tolist()
+    }
+
+    # Zapisanie danych do pliku JSON
+    file_name_calib = 'calibration_transformation_data.json'
     writeJson2file(jsonObj=jsonCALIBout, path=file_name_calib, type=1)
 
-
-def checkTransformation(calib_path, object_3d_point,P_rawL,P_rawR):
+def check_transformation(calib_path, object_3d_point, P_rawL, P_rawR):
+    # Wczytanie danych kalibracyjnych z pliku JSON
     calib_data = getJsonObjFromFile(calib_path)
-    P3d, P1_raw,P2_raw = np.array(object_3d_point),np.array(P_rawL),np.array(P_rawR)
-    #P3d,P1_raw, P2_raw = test_data["P_3D"], test_data["P1_2D_raw"], test_data["P2_2D_raw"]
-    K1,K2,R,T,T_CAM2WRL, T_WRL2CAM, r1,r2,t1,t2, D1,D2 = calib_data["K1"],calib_data["K2"],calib_data["R"],calib_data["T"],calib_data["C2W"], calib_data["W2C"], calib_data['r1'],calib_data['r2'],calib_data['t1'],calib_data['t2'], calib_data['D1'], calib_data['D2']
-    pkt_WRL = get_3DWorld_from_2DImage(P1_raw, P2_raw, K1, K2, R, T, T_CAM2WRL).tolist()
-    pkt_WRL, P3d = np.array(pkt_WRL), np.array(P3d)
-    pkt_IMG1, pkt_IMG2 = get_2DImage_from_3DWorld(P3d, np.array(r1), np.array(t1), np.array(r2), np.array(t2), np.array(K1), np.array(D1), np.array(K2), np.array(D2), T_WRL2CAM)
+
+    # Przekształcanie danych wejściowych
+    P3d = np.array(object_3d_point)
+    P1_raw = np.array(P_rawL)
+    P2_raw = np.array(P_rawR)
+
+    # Rozpakowanie parametrów kalibracyjnych
+    K1, K2 = calib_data["K1"], calib_data["K2"]
+    R, T = calib_data["R"], calib_data["T"]
+    T_CAM2WRL, T_WRL2CAM = calib_data["C2W"], calib_data["W2C"]
+    r1, r2 = calib_data['r1'], calib_data['r2']
+    t1, t2 = calib_data['t1'], calib_data['t2']
+    D1, D2 = calib_data['D1'], calib_data['D2']
+
+    # Obliczenie punktów w przestrzeni 3D na podstawie 2D
+    pkt_WRL = get_3DWorld_from_2DImage(P1_raw, P2_raw, K1, K2, R, T, T_CAM2WRL)
+
+    # Obliczenie punktów 2D na obrazie na podstawie punktów 3D
+    pkt_IMG1, pkt_IMG2 = get_2DImage_from_3DWorld(P3d, r1, t1, r2, t2, K1, D1, K2, D2, T_WRL2CAM)
+
+    # Obliczanie różnic i wyświetlanie wyników
     print('IMG > WRL - różnice względem wartości oczekiwanej w [mm]:')
     print("=======================")
-    a = pkt_WRL - P3d
-    print(a[:,0])
+    print(pkt_WRL - P3d)
     print("============================")
     print('WRL > IMG - różnice względem wartości oczekiwanej w [px]:')
     print(pkt_IMG1 - P1_raw)

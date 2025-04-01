@@ -25,44 +25,35 @@ Przechwytywanie ramek w trybie live jest obsługiwane przez skrypt ```get_frame.
 * utworzenie katalogów do zapisu - jeśli nie zostały stworzone wcześniej
 Poniższe nazwy katalogów są przykładowe, proszę stworzyć własne nazwy zgodnie ze strukturą 
 * Stworzyć swój katalog z nazwą grupy i podgrupy
-```
-WSI_i_TRZ/LAB1/Raspberry/
-├── Raspberry
-│   ├── 01. get_frame.py
-│   ├── 02. table_veryfication.py
-│   ├── lab1_lib_rpi.py
-│   ├── main.py
-│   ├── readme.md`
-│   ├── requirements.txt   
-│   ├── grupa_podgrupa
-│   ├   ├── kalibracja 
-│   │   │    ├── right
-│   │   │    │   ├── 01.jpg
-│   │   │   │           
-│   │   │   │                
-│   │   │   │             
-│   │   │   ├── left
-│   │   │   ├── 01.jpg
-│   │   │   │           
-│   │   │   │                
-│   │   │   │ 
-│   │   │   ├── correct_left
-│   │   │   │   ├── 01.jpg
-│   │   │   │           
-│   │   │   │                
-│   │   │   │ 
-            ├── correct_right 
-                ├── 01.jpg
-│   │   │   │           
-│   │   │   │                
-│   │   │   │ 
-│   │   │   │           
-│   │   │   │                
-│   │   │   │ ├── cam_matrix_left.json
-│   │   │   │           
-│   │   │   │                
-│   │   │   │ ├── cam_matrix_left.json
-```
+
+<!-- START_STRUCTURE -->
+
+# 📂 Wymagana struktura katalogów
+
+- 📁 `WX1S1_xyz`
+  - 📁 `kalibracja`
+    - 📁 `correct_left`
+    - 📁 `correct_right`
+    - 📁 `left`
+    - 📁 `right`
+  - 📄 `matrix_cam_left.json`
+  - 📄 `matrix_cam_right.json`
+  - 📁 `obiekty`
+    - 📁 `obiekt_2d`
+      - 📁 `left`
+      - 📁 `right`
+    - 📁 `obiekt_3d`
+      - 📁 `left`
+      - 📁 `right`
+- 🐍 `01.get_frame.py`
+- 🐍 `02.images_checker.py`
+- 🐍 `03.calib_err.py`
+- 🐍 `lab1_lib_rpi.py`
+- 📜 `readme.md`
+- 📝 `requirements.txt`
+- 
+
+<!-- END_STRUCTURE -->
 
 * w skrypcie ```get_frame.py``` automatycznie zostana stworzone foldery o podanych nazwach. Należy zmienić na swoją nazwę!
 ```
@@ -93,6 +84,9 @@ argumentami tej funkcji są ścieżki folderów do zebranych zdjęć oraz do fol
 pozycji kamery tablica kalibracyjna jest wykrywana poprawnie. Zdjęcia dla których nie zostaną
 wykryte rogi są **<span style="color:orange;">bezużyteczne</span>** do dalszych analiz.
 
+<p align="center">
+  <img src="images/corners_stereo.jpg"/>
+</p>
   
 ### Kalibracja pojedynczej kamery
 Stereo kalibracją jest połączenie dwóch skalibrowanych kamer, w bibliotece znajduje się plik do przeprowadzenia takiej kalibracji. Będzie to niezwykle przydatne dla dalszych obliczeń.
@@ -108,29 +102,29 @@ Po kalibracji kamery, plik JSON zawiera dane, które opisują wyniki procesu. Po
   "images": [
     {
       "filename": "image1.jpg",
-      "imagepoints": [[x1, y1], [x2, y2], ...],
-      "objectpoints": [[x1, y1, z1], [x2, y2, z2], ...]
+      "imagepoints": [["x1", "y1"], ["x2", "y2"], "..."],
+      "objectpoints": [["x1", "y1", "z1"], ["x2", "y2", "z2"], "..."]
     },
     {
       "filename": "image2.jpg",
-      "imagepoints": [[x1, y1], [x2, y2], ...],
-      "objectpoints": [[x1, y1, z1], [x2, y2, z2], ...]
+      "imagepoints": [["x1", "y1"], ["x2", "y2"], "..."],
+      "objectpoints": [["x1", "y1", "z1"], ["x2", "y2", "z2"], "..."]
     }
   ],
   "ret": 1.0,
   "K": [
-    [fx, 0, cx],
-    [0, fy, cy],
+    ["fx", 0, "cx"],
+    [0, "fy", "cy"],
     [0, 0, 1]
   ],
-  "D": [k1, k2, p1, p2, k3],
+  "D": ["k1", "k2", "p1", "p2", "k3"],
   "rvecs": [
-    [rx1, ry1, rz1],
-    [rx2, ry2, rz2]
+    ["rx1", "ry1", "rz1"],
+    ["rx2", "ry2", "rz2"]
   ],
   "tvecs": [
-    [tx1, ty1, tz1],
-    [tx2, ty2, tz2]
+    ["tx1", "ty1", "tz1"],
+    ["tx2", "ty2", "tz2"]
   ],
   "square_size": 25
 }
@@ -184,6 +178,18 @@ możliwie najmniejszy błąd reprojekcji. Wykres słupkowy można wygerenować k
 * ```reproj_errors_plot_bar(errors, filenames)``` dla pojedynczej kamery
 * ```plot_bar_comparison(imagefiles1, reprojectionerrors1, imagefiles2, reprojectionerrors2)``` dla porównania dwóch kamer 
 
+Przykładowy wykresy
+* przed selekcją zdjęć
+
+<p align="center">
+  <img src="images\reproj_err_przed.jpg"/>
+</p>
+
+* po selekcji zdjęć
+
+<p align="center">
+  <img src="images\reproj_err.jpg"/>
+</p>
 
 **Wyjaśnienie dla ```reproj_errors_plot_bar(errors, filenames)```:** <br>
 
@@ -259,11 +265,27 @@ Wartość błędu reprojekcji mówi, jak daleko średnio znajdują się rzeczywi
 ## Ostatnim etapem zbierania danych jest rejestracja obrazów dla lewej i prawej kamery obiektów 2D i 3D.
 
 W tym celu ponownie należy użyć skryptu ```get_frame()``` *<span style="color:red;">ze zmienionymi nazwami katalogów* 
-np. punkty_3D - oddzielnie dla prawe i lewej kamery. Przechwycić pare klatek w różnych położeniach obiektów 
+np. punkty_3D - oddzielnie dla prawe i lewej kamery. Przechwycić pare klatek w różnych położeniach obiektów. 
+Przykładowe obrazy przedstawiono poniżej
+
+* markery ArUco 
+<p align="center">
+  <img src="images\resized_markerL.jpg" width="45%" />
+  <img src="images\resized_markerR.jpg" width="45%" />
+</p>
+
+* obiekt 3D
+
+<p align="center">
+  <img src="images\resized__36L.jpg" width="45%" />
+  <img src="images\resized__36R.jpg" width="45%" />
+</p>
 
 
+# 🎉 <span style="color:green;">Zadanie z wykorzystaniem Raspberry Pi można uznać za wykonane jeśli:
+* zebrane zdjęcia do stereo-kalibracji oraz powstałe macierze kamer, są dobrej jakości na podstawie powyższych kryteriów, 
+* Zarejestrowano zdjęcia dla obiektów 3D
 
 
-## 🎉 <span style="color:green;">Zadanie z wykorzystaniem Raspberry Pi można uznać za wykonane jeśli zebrane zdjęcia do stereo-kalibracji oraz powstałe macierze kamer, są dobrej jakości na podstawie powyższych kryteriów. Zarejestrowano zdjęcia dla obiektów 3D
 
 
