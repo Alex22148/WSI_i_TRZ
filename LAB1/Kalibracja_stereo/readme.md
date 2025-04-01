@@ -30,8 +30,9 @@ przykład wywołania funkcji:
 ```calib_stereo_from_jsons(matrix_cam_left.json, matrix_cam_right.json```
 
 funkcja zwraca plik .json o strukturze:
-```json lines
- jsonStruct = {
+```json
+ "jsonStruct = 
+{
         "retS": "ret",
         "K1": "mtxL",
         "D1": "distL",
@@ -44,7 +45,7 @@ funkcja zwraca plik .json o strukturze:
         "rvecsL": "[r.tolist() for r in rvecsL]",
         "rvecsR": "[r.tolist() for r in rvecsR]",
         "square_size": "square_sizeL"
-    }
+    }"
 ```
 * ***ret***	- Średni błąd reprojekcji (im mniejszy, tym lepiej)
 * ***K1, K2*** - Macierze kamer (ogniskowa, punkt główny)
