@@ -5,7 +5,7 @@ json_cam2 = r'matrix_cam_right.json'
 
 calib_stereo_from_jsons(json_cam1, json_cam2)
 
-pathL,pathR = r"E:\2025.03.06\markery_L\markery_36.jpg",r"E:\2025.03.06\markery_R\markery_36.jpg"
+pathL,pathR = r"temp_files\marker_L.jpg",r"temp_files\marker_L.jpg"
 
 imageL,imageR = cv2.imread(pathL), cv2.imread(pathR)
 # wykrycie lewych naroży markerów
@@ -19,7 +19,7 @@ paramsL[:, 0] *= 2
 paramsL,paramsR = paramsL.tolist(),paramsR.tolist()
 imgL = cv2.resize(imgL, (3280, 2464), interpolation=cv2.INTER_LINEAR)
 imgR = cv2.resize(imgR, (3280, 2464), interpolation=cv2.INTER_LINEAR)
-cv2.imwrite('arucoL.jpg',imgL)
+cv2.imwrite('Images/arucoL.jpg',imgL)
 cv2.imwrite('Images/arucoR.jpg', imgR)
 # # =======
 
@@ -45,10 +45,12 @@ img_left, img_right = cv2.imread(pathL), cv2.imread(pathR)
 
 show_data_image(p2d_left,p2d_right,left_calculated_2d,right_calculated_2d, img_left, img_right,True)
 
+#punkty stożek
+
 p1 = [[794,1343],[887,1441]]
 p2 = [[868,1350],[957,1454]]
 
-img_left, img_right = cv2.imread(r"E:\backup\working_data\stozek_L\_39.jpg"), cv2.imread(r"E:\backup\working_data\stozek_R\_39.jpg")
+img_left, img_right = cv2.imread(r"temp_files\stozek_L.jpg"), cv2.imread(r"temp_files\stozek_R.jpg")
 
 c1 =  getJsonObjFromFile('matrix_stereo.json')
 

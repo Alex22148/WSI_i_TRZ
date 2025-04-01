@@ -2,12 +2,41 @@ import cv2, time
 import numpy as np
 from cv2 import aruco
 import json
-from lbiio_json import getJsonObjFromFile,writeJson2file
 from scipy import linalg
 from scipy.spatial.transform import Rotation
 import glob
 from json import JSONEncoder
 import math
+
+def getJsonObjFromFile(path):
+    jsonObj={}
+    try:
+        f = open(path, encoding="utf-8")
+        jsonObj = json.load(f)
+    except:
+        print("prawdopodobnie brak pliku")
+    return jsonObj
+
+
+def writeJson2file(jsonObj,path,type=0):
+    '''
+    Example: JsonObj ={
+    "name" : "sathiyajith",
+    "rollno" : 56,
+    "cgpa" : 8.6,
+    "phonenumber" : "9976770500"
+}
+    :param jsonObj:
+    :param path:
+    :param type:
+    :return:
+    '''
+    if type==0:
+        with open(path, 'w') as f:
+            json.dump(jsonObj, f)
+    if type==1:
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(jsonObj, f, ensure_ascii=False, indent=4)
 
 
 def load_camera_params(json_file):
