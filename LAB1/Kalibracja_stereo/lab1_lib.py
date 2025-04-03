@@ -579,13 +579,15 @@ def check_precision(calibdata,sup_data,p2d_left, p2d_right, points_world_3d):
 
 def show_data_image(p2d_left,p2d_right,p2d_left_calculated,p2d_right_calculated, img_left, img_right,save_images):
     point_numbers = range(1, len(p2d_left_calculated) + 1)
+    w, h, r = img_right.shape
+    img_left, img_right = cv2.cvtColor(img_left, cv2.COLOR_BGR2RGB), cv2.cvtColor(img_right, cv2.COLOR_BGR2RGB)
+    compute = np.hstack((img_left, img_right))
     # Nanosi numery różnic na obrazy
     for i, (p1, p2, p11, p22) in enumerate(zip(p2d_left,p2d_right,p2d_left_calculated,p2d_right_calculated)):
         x1, y1 = int(p1[0] / 2), int(p1[1])
         x2, y2 = int(p2[0] / 2), int(p2[1])
         x11, y11 = int(p11[0] / 2), int(p11[1])
         x22, y22 = int(p22[0] / 2), int(p22[1])
-        print(x1, y1)
         # Naniesienie różnic na obraz lewej kamery
         text_left = f"{point_numbers[i]}"
         cv2.putText(img_left, text_left, (x1, y1 - 25), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 255), 3)
@@ -605,13 +607,19 @@ def show_data_image(p2d_left,p2d_right,p2d_left_calculated,p2d_right_calculated,
         cv2.drawMarker(img_right, (x22,y22), color=[0,0,255], thickness=2,
                        markerType=cv2.MARKER_TILTED_CROSS, line_type=cv2.LINE_AA,
                        markerSize=10)
+        random_color = tuple(np.random.randint(0, 256, size=3).tolist())
+        new_x = x2+h
+        cv2.line(compute, (x1, y1), (new_x, y2), random_color, 5)
 
     imgL = cv2.resize(img_left, (3280, 2464), interpolation=cv2.INTER_LINEAR)
     imgR = cv2.resize(img_right, (3280, 2464), interpolation=cv2.INTER_LINEAR)
-    imgL,imgR = cv2.cvtColor(imgL, cv2.COLOR_BGR2RGB), cv2.cvtColor(imgR, cv2.COLOR_BGR2RGB)
+
+
     imgplotL = plt.imshow(imgL)
     plt.show()
     imgplotR = plt.imshow(imgR)
+    plt.show()
+    img_plot_compute = plt.imshow(compute)
     plt.show()
     if save_images:
         cv2.imwrite("Images/image_left.jpg", imgL)
@@ -672,6 +680,7 @@ def calculated_points_2d(points_world_3d,sup_data,calibdata):
 
 def draw_points_and_distances(points_left, points_right, img_left, img_right, stereo_matrix_object,save_images):
     # Obliczanie punktów 3D na podstawie punktów 2D
+    img_left, img_right = cv2.cvtColor(img_left, cv2.COLOR_BGR2RGB), cv2.cvtColor(img_right, cv2.COLOR_BGR2RGB)
     points_3d = points_3d_from_data(stereo_matrix_object, points_left, points_right, type='list')
     img_left_copy = img_left.copy()
     img_right_copy = img_right.copy()

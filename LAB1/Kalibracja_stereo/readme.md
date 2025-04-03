@@ -430,12 +430,12 @@ Zwraca points_check jako wynik działania funkcji.
 ### 🔎Podsumowanie
 Funkcje ```check_precision``` oraz ```supplementary_data``` umożliwiają generowanie danych kalibracyjnych kamer stereo, obliczanie transformacji między układami koordynatów oraz sprawdzanie dokładności transformacji 3D-2D i 2D-3D. Dzięki nim można sprawdzić, czy obliczane punkty w przestrzeni 3D odpowiadają punktom 2D na obrazach kamer, co jest kluczowe przy analizie i weryfikacji wyników kalibracji kamery.
 
-### wizualizacja obliczonych punktów 2D 
+### Wizualizacja obliczonych punktów 2D 
 
 Funkcja ```show_data_image``` przedstawia graficzną realizację przekształceń punktów 
 
 <p align="center">
-  <img src="Images/punkty_triangulacja.jpg"/>
+  <img src="Images/points_h.jpg"/>
 </p>
 
 
