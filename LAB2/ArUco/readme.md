@@ -307,7 +307,7 @@ center_ref = data["center_ref"]
 
 * Pozycje znaczników (`center_ref`).
 
-### 3.:bookmark_tabs: Definicja przedziałów sprawdzania pozycji
+### 3. :bookmark_tabs: Definicja przedziałów sprawdzania pozycji
 ```python
 dist_min, dist_max = -30, 30
 x_min, x_max = -30, 30
@@ -402,7 +402,8 @@ if ids in id_ref:
 
     * Czerwony (0,0,255) – wokół pozycji referencyjnej.
 
-### 5. **:chart_with_upwards_trend:  Obliczanie różnic pozycji i analiza**
+### 6. :chart_with_upwards_trend:  Obliczanie różnic pozycji i analiza
+
 ```python
 if len(list_points) > 0:
     value = mean_values(list_points, mean_x_ref, mean_y_ref, mean_distance_ref)
@@ -440,7 +441,7 @@ if len(list_points) > 4:
 
 Rotacja kamery jest obliczana z wykorzystaniem macierzy homografii. Warunek konieczny do obliczenia macierzy H to posiadanie min. 4 punktów oraz macierz kamery.
 
-### 6. :framed_picture: Wyświetlanie obrazu i obsługa klawiatury
+### 7. :framed_picture: Wyświetlanie obrazu i obsługa klawiatury
 ```python
 cv2.imshow('Kamera', frame)
 key = cv2.waitKey(1) & 0xFF
