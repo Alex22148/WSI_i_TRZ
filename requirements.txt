@@ -4,5 +4,7 @@ requests==2.32.3
 websockets==15.0.1
 plotly~=6.0.1
 scipy~=1.15.2
-matplotlib~=3.10.1
-Flask~=3.0.3
+matplotlib~=3.10.0
+Flask~=3.1.0
+pyueye~=4.96.952
+pillow~=11.1.0

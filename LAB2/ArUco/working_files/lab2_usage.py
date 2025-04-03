@@ -99,20 +99,20 @@ def positioning(img_real, coordinates_ref,id_ref,avarage_distance_ref):
 
 #camera_positioning(avarage_distance_ref, coordinates_ref, id_ref)
 
-cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
-if not cap.isOpened():
-    print("Błąd: Nie udało się otworzyć kamery.")
-    exit()
-while True:
-    ret, frame = cap.read()
-    if not ret:
-        print("Błąd: Nie udało się pobrać klatki.")
-        break
-    cv2.imshow('Kamera USB', frame)
-    key = cv2.waitKey(1) & 0xFF
-    if key == ord('q'):
-        break
-cap.release()
-cv2.destroyAllWindows()
+# cap = cv2.VideoCapture(0)
+# cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
+# cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
+# if not cap.isOpened():
+#     print("Błąd: Nie udało się otworzyć kamery.")
+#     exit()
+# while True:
+#     ret, frame = cap.read()
+#     if not ret:
+#         print("Błąd: Nie udało się pobrać klatki.")
+#         break
+#     cv2.imshow('Kamera USB', frame)
+#     key = cv2.waitKey(1) & 0xFF
+#     if key == ord('q'):
+#         break
+# cap.release()
+# cv2.destroyAllWindows()
