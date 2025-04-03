@@ -1,14 +1,8 @@
-
-
-
 # 📌 Identyfikacja markerów ArUco
 
-
-Opis działania funkcji camera_auto_detect_aruco1
-Funkcja camera_auto_detect_aruco1 służy do wykrywania markerów ArUco na obrazie oraz zapisywania ich informacji w słowniku. Dodatkowo nanosi oznaczenia na obrazie, aby wizualizować wykryte markery.
-
 ### 🔍 Skrypt `ArUco_detect.py` 
-funkcja `detect_aruco_with_dict`
+
+**funkcja `detect_aruco_with_dict`**
 
 * **Przygotowanie struktury danych**
  
@@ -408,7 +402,7 @@ if ids in id_ref:
 
     * Czerwony (0,0,255) – wokół pozycji referencyjnej.
 
-** :chart_with_upwards_trend: Obliczanie różnic pozycji i analiza**
+** :chart_with_upwards_trend: 5. Obliczanie różnic pozycji i analiza**
 ```python
 if len(list_points) > 0:
     value = mean_values(list_points, mean_x_ref, mean_y_ref, mean_distance_ref)
