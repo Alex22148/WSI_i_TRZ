@@ -4,6 +4,7 @@ import json
 from gesture_sensor import gesture, get_gesture_dict
 
 gestures = gesture()
+gesture.init()
 
 async def send_gesture_name(websocket):
     try:

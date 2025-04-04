@@ -2,12 +2,44 @@ import cv2, time
 import numpy as np
 from cv2 import aruco
 import json
-from lbiio_json import getJsonObjFromFile,writeJson2file
 from scipy import linalg
 from scipy.spatial.transform import Rotation
 import glob
 from json import JSONEncoder
 import math
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.use('TkAgg')
+
+def getJsonObjFromFile(path):
+    jsonObj={}
+    try:
+        f = open(path, encoding="utf-8")
+        jsonObj = json.load(f)
+    except:
+        print("prawdopodobnie brak pliku")
+    return jsonObj
+
+
+def writeJson2file(jsonObj,path,type=0):
+    '''
+    Example: JsonObj ={
+    "name" : "sathiyajith",
+    "rollno" : 56,
+    "cgpa" : 8.6,
+    "phonenumber" : "9976770500"
+}
+    :param jsonObj:
+    :param path:
+    :param type:
+    :return:
+    '''
+    if type==0:
+        with open(path, 'w') as f:
+            json.dump(jsonObj, f)
+    if type==1:
+        with open(path, 'w', encoding='utf-8') as f:
+            json.dump(jsonObj, f, ensure_ascii=False, indent=4)
 
 
 def load_camera_params(json_file):
@@ -368,19 +400,16 @@ def sortedRawPoints(path_points_2d_camL,path_points_2d_camR):
 
 
 def sorted_2d_3d_Points(cam1_2d_point,cam2_2d_point,world_3d_point):
-    print(world_3d_point)
     p2d1, p2d2,p3d3 = getJsonObjFromFile(cam1_2d_point), getJsonObjFromFile(cam2_2d_point),getJsonObjFromFile(world_3d_point)
     dict1 = {p2d1["ids"][i]: p2d1["coordinates"][i] for i in range(len(p2d1["ids"]))}
     dict2 = {p2d2["ids"][i]: p2d2["coordinates"][i] for i in range(len(p2d2["ids"]))}
     dict3 = {p3d3["ids"][i]: p3d3["coordinates"][i] for i in range(len(p3d3["ids"]))}
-    print(dict3)
     common_ids = sorted(set(dict1.keys()) & set(dict2.keys()))
     list1 = [dict1[id] for id in common_ids]
     list2 = [dict2[id] for id in common_ids]
     list3 = [dict3[id] for id in common_ids]
-    print(list3)
     jstr = {"camL":list1,"camR":list2,"world":list3,"ids":common_ids}
-    with open("../working_data_ignore/sorted_2D_3D_points.json", "w") as write_file:
+    with open("sorted_2D_3D_points.json", "w") as write_file:
         json.dump(jstr, write_file)
 
     return list1, list2,list3
@@ -399,11 +428,7 @@ def get_coordinates_by_id(sorted_2D_3D_points_json_file, search_id):
         camL_coords = data["camL"][index]
         camR_coords = data["camR"][index]
         world_coords = data["world"][index]
-        # Wyświetlenie wyników
-        print(f"ID: {search_id}")
-        print(f"camL: {camL_coords}")
-        print(f"camR: {camR_coords}")
-        print(f"world: {world_coords}")
+
         return camL_coords, camR_coords, world_coords
     else:
         print(f"ID {search_id} nie znalezione w 'ids'.")
@@ -541,7 +566,7 @@ def check_precision(calibdata,sup_data,p2d_left, p2d_right, points_world_3d):
         dat = f"data_{i+1}"
         points_check[dat] = {
             "p2d_left_reference": p2d_left[i].tolist(),
-            "p2d_right_reference": p2d_left[i].tolist(),
+            "p2d_right_reference": p2d_right[i].tolist(),
             "p2d_left_calculate": pkt_IMG1[i].tolist(),
             "p2d_right_calculate": pkt_IMG2[i].tolist(),
             "p3d_world_reference": points_world_3d[i].tolist(),
@@ -554,38 +579,94 @@ def check_precision(calibdata,sup_data,p2d_left, p2d_right, points_world_3d):
 
 def show_data_image(p2d_left,p2d_right,p2d_left_calculated,p2d_right_calculated, img_left, img_right,save_images):
     point_numbers = range(1, len(p2d_left_calculated) + 1)
+    w, h, r = img_right.shape
+    img_left, img_right = cv2.cvtColor(img_left, cv2.COLOR_BGR2RGB), cv2.cvtColor(img_right, cv2.COLOR_BGR2RGB)
+    compute = np.hstack((img_left, img_right))
     # Nanosi numery różnic na obrazy
     for i, (p1, p2, p11, p22) in enumerate(zip(p2d_left,p2d_right,p2d_left_calculated,p2d_right_calculated)):
         x1, y1 = int(p1[0] / 2), int(p1[1])
         x2, y2 = int(p2[0] / 2), int(p2[1])
         x11, y11 = int(p11[0] / 2), int(p11[1])
         x22, y22 = int(p22[0] / 2), int(p22[1])
-        print(x1, y1)
         # Naniesienie różnic na obraz lewej kamery
         text_left = f"{point_numbers[i]}"
         cv2.putText(img_left, text_left, (x1, y1 - 25), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 255), 3)
-        img_left = cv2.circle(img_left, (x1, y1), 10, (0, 255, 0), 2)  # Narysowanie punktu na obrazie lewej kamery
-        img_left = cv2.circle(img_left, (x11, y11), 5, (0, 0, 255), -1)  # Narysowanie punktu na obrazie lewej kamery
+        cv2.drawMarker(img_left, (x1, y1), color=[0, 255, 0], thickness=2,
+                       markerType=cv2.MARKER_TILTED_CROSS, line_type=cv2.LINE_AA,
+                       markerSize=10)
+        cv2.drawMarker(img_left, (x11, y11), color=[0, 0, 255], thickness=1,
+                       markerType=cv2.MARKER_TILTED_CROSS, line_type=cv2.LINE_AA,
+                       markerSize=10)
 
         # Naniesienie różnic na obraz prawej kamery
         text_right = f"{point_numbers[i]}"
         cv2.putText(img_right, text_right, (x2, y2 - 25), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 255), 3)
-        cv2.circle(img_right, (x2, y2), 10, (0, 255, 0), 2)  # Narysowanie punktu na obrazie prawej kamery
-        cv2.circle(img_right, (x22, y22), 5, (0, 0, 255), -1)  # Narysowanie punktu na obrazie prawej kamery
+        cv2.drawMarker(img_right, (x2,y2), color=[0,255,0], thickness=2,
+                       markerType=cv2.MARKER_TILTED_CROSS, line_type=cv2.LINE_AA,
+                       markerSize=10)
+        cv2.drawMarker(img_right, (x22,y22), color=[0,0,255], thickness=2,
+                       markerType=cv2.MARKER_TILTED_CROSS, line_type=cv2.LINE_AA,
+                       markerSize=10)
+        random_color = tuple(np.random.randint(0, 256, size=3).tolist())
+        new_x = x2+h
+        cv2.line(compute, (x1, y1), (new_x, y2), random_color, 5)
 
     imgL = cv2.resize(img_left, (3280, 2464), interpolation=cv2.INTER_LINEAR)
     imgR = cv2.resize(img_right, (3280, 2464), interpolation=cv2.INTER_LINEAR)
+
+
+    imgplotL = plt.imshow(imgL)
+    plt.show()
+    imgplotR = plt.imshow(imgR)
+    plt.show()
+    img_plot_compute = plt.imshow(compute)
+    plt.show()
     if save_images:
         cv2.imwrite("Images/image_left.jpg", imgL)
         cv2.imwrite("Images/image_right.jpg", imgR)
 
     # Wyświetlenie obrazów z naniesionymi punktami
-    img_left_resized = cv2.resize(imgL, (0, 0), fx=0.25, fy=0.25)
-    img_right_resized = cv2.resize(imgR, (0, 0), fx=0.25, fy=0.25)
-    combined_img = np.hstack((img_left_resized, img_right_resized))
-    cv2.imshow("Combined Image", combined_img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+
+
+def draw_reprojection_points(image_path, objpoints, imgpoints, rvecs, tvecs, camera_matrix, dist_coeffs):
+    image = cv2.imread(image_path)
+    projected_points, _ = cv2.projectPoints(objpoints, rvecs, tvecs, camera_matrix, dist_coeffs)
+    projected_points = projected_points.reshape(-1, 2)
+    image2 = cv2.resize(image, (3280,2464))
+    for obj_point, img_point, projected_point in zip(objpoints, imgpoints, projected_points):
+        cv2.drawMarker(image2, tuple(img_point.astype(int)), color=[0, 0, 255], thickness=2,
+                       markerType=cv2.MARKER_TILTED_CROSS, line_type=cv2.LINE_AA,
+                       markerSize=10)
+        cv2.drawMarker(image2, tuple(projected_point.astype(int)), color=[0, 255, 0], thickness=2,
+                       markerType=cv2.MARKER_TILTED_CROSS, line_type=cv2.LINE_AA,
+                       markerSize=10)
+        cv2.putText(image2, "original", (100,200), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 0, 255), 5)
+        cv2.putText(image2, "reprojected", (100,400), cv2.FONT_HERSHEY_SIMPLEX, 3, (0, 255, 0), 5)
+    image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2RGB)
+    imgplot = plt.imshow(image2)
+    plt.show()
+    return image2
+
+
+def compare_original_reprojected_points(json_file,images_folder, image_filename):
+    with open(json_file, "r") as file:
+        data = json.load(file)
+    camera_matrix = np.array(data["K"])
+    dist_coeffs = np.array(data["D"])
+    for index, image_data in enumerate(data["images"]):
+        image_name = image_data["filename"]
+        if image_name==image_filename:
+            objpoints = np.array(image_data["objectpoints"], dtype=np.float32)
+            imgpoints = np.array(image_data["imagepoints"], dtype=np.float32)
+            rvecs = np.array(data["rvecs"][index], dtype=np.float32)
+            rotation_matrix, _ = cv2.Rodrigues(rvecs)
+            rvecs = rotation_matrix
+            tvecs = np.array(data["tvecs"][index], dtype=np.float32)
+            imgpoints = imgpoints.reshape(-1, 2)
+            image_path = f"{images_folder}/{image_name}"
+            image = draw_reprojection_points(image_path, objpoints, imgpoints, rvecs, tvecs, camera_matrix, dist_coeffs)
+            return image
+
 
 def calculated_points_2d(points_world_3d,sup_data,calibdata):
     T_WRL2CAM, T_CAM2WRL, r1, t1, r2, t2 = sup_data
@@ -597,15 +678,13 @@ def calculated_points_2d(points_world_3d,sup_data,calibdata):
     pkt_IMG1, pkt_IMG2 = get_2DImage_from_3DWorld(points_world_3d, r1, t1, r2, t2, K1, dist1, K2, dist2, T_WRL2CAM)
     return pkt_IMG1, pkt_IMG2
 
-def draw_points_and_distances(points_left, points_right, img_left, img_right, stereo_matrix_object):
+def draw_points_and_distances(points_left, points_right, img_left, img_right, stereo_matrix_object,save_images):
     # Obliczanie punktów 3D na podstawie punktów 2D
+    img_left, img_right = cv2.cvtColor(img_left, cv2.COLOR_BGR2RGB), cv2.cvtColor(img_right, cv2.COLOR_BGR2RGB)
     points_3d = points_3d_from_data(stereo_matrix_object, points_left, points_right, type='list')
-    # Kopia obrazów do rysowania
     img_left_copy = img_left.copy()
     img_right_copy = img_right.copy()
-    # Kolory dla punktów i linii
-    color= (0, 0, 255)  # Czerwony dla punktów
-    # Rysowanie punktów i linii na obrazach
+    color= (0, 0, 255)
     for i in range(len(points_left)):
         pl=points_left[i]
         pr=points_right[i]
@@ -614,35 +693,22 @@ def draw_points_and_distances(points_left, points_right, img_left, img_right, st
         cv2.circle(img_left_copy, (x1,y1), 5, color, -1)
         cv2.circle(img_right_copy, (x2,y2), 5, color, -1)
         if i > 0:
-            # Odległość w 3D między kolejnymi punktami
             dist = distance_2_3d_points(points_3d[i - 1], points_3d[i])
-
-            # Rysowanie linii na obrazach
             cv2.line(img_left_copy, tuple(points_left[i - 1]), tuple(points_left[i]), color, 2)
             cv2.line(img_right_copy, tuple(points_right[i - 1]), tuple(points_right[i]), color, 2)
-
-            # Wyświetlenie odległości na obrazie
             mid_left = (
             (points_left[i - 1][0] + points_left[i][0]) // 2, (points_left[i - 1][1] + points_left[i][1]) // 2)
             mid_right = (
             (points_right[i - 1][0] + points_right[i][0]) // 2, (points_right[i - 1][1] + points_right[i][1]) // 2)
             cv2.putText(img_left_copy, f"{dist:.2f} mm", mid_left, cv2.FONT_HERSHEY_SIMPLEX, 3, color, 3)
             cv2.putText(img_right_copy, f"{dist:.2f} mm", mid_right, cv2.FONT_HERSHEY_SIMPLEX, 3, color, 3)
-
-    # Skalowanie obrazów (4x mniejsze)
     img_left_copy = cv2.resize(img_left_copy, (3280, 2464), interpolation=cv2.INTER_LINEAR)
     img_right_copy = cv2.resize(img_right_copy, (3280, 2464), interpolation=cv2.INTER_LINEAR)
-    cv2.imwrite('Images/cone_L.jpg', img_left_copy)
-    cv2.imwrite('Images/cone_R.jpg', img_right_copy)
-    img_left_resized = cv2.resize(img_left_copy, (0, 0), fx=0.25, fy=0.25)
-    img_right_resized = cv2.resize(img_right_copy, (0, 0), fx=0.25, fy=0.25)
-
-    # Połączenie obrazów w jeden (obok siebie)
-    combined_img = np.hstack((img_left_resized, img_right_resized))
-    # Wyświetlenie obrazu
-    cv2.imshow("Stereo View", combined_img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    if save_images:
+        cv2.imwrite('Images/cone_L.jpg', img_left_copy)
+        cv2.imwrite('Images/cone_R.jpg', img_right_copy)
+    imgplot = plt.imshow(img_left_copy)
+    plt.show()
     return img_left_copy,img_right_copy
 
 

@@ -1,10 +1,10 @@
-from lab_library import *
+from LAB2.ArUco.working_files.lab_library import *
 
 reference_data_collected=True
 
 if reference_data_collected is not True:
     # %%
-    from lab_library import ref_marker_pos
+    from LAB2.ArUco.working_files.lab_library import ref_marker_pos
     channel = 0 #jeśli nie działa spróbuj innego kanału np. 1
     ref_marker_pos(channel)
 

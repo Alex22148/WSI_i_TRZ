@@ -1,10 +1,10 @@
-import numpy as np
-from math import sqrt
-from itertools import combinations
-from cv2 import aruco
-import cv2
-import json
-import time
+# import numpy as np
+# from math import sqrt
+# from itertools import combinations
+# from cv2 import aruco
+# import cv2
+# import json
+# import time
 
 def corners2center(corners,ids):
     for (markerCorner, markerID) in zip(corners, ids):
@@ -16,43 +16,43 @@ def corners2center(corners,ids):
         cY = int((topLeft[1] + bottomRight[1]) / 2.0)
         return cX, cY,markerID
 
-def auto_detect_aruco(image_path,image_show,position):
-    try:
-        image = cv2.imread(image_path)
-        print("xxxx")
-    except:
-        print("=====")
-        image = image_path
-    best_dict = None
-    best_corners = None
-    best_ids = None
-    max_detected = 0
-    aruco_dicts = [
-        aruco.DICT_4X4_50, aruco.DICT_4X4_100, aruco.DICT_4X4_250, aruco.DICT_4X4_1000,
-        aruco.DICT_5X5_50, aruco.DICT_5X5_100, aruco.DICT_5X5_250, aruco.DICT_5X5_1000,
-        aruco.DICT_6X6_50, aruco.DICT_6X6_100, aruco.DICT_6X6_250, aruco.DICT_6X6_1000,
-        aruco.DICT_7X7_50, aruco.DICT_7X7_100, aruco.DICT_7X7_250, aruco.DICT_7X7_1000,
-        aruco.DICT_ARUCO_ORIGINAL
-    ]
-    for dict_type in aruco_dicts:
-        aruco_dict = aruco.getPredefinedDictionary(dict_type)
-        parameters = aruco.DetectorParameters()
-        corners, ids, _ = aruco.detectMarkers(image, aruco_dict, parameters=parameters)
-        if ids is not None and len(ids) > max_detected:
-            max_detected = len(ids)
-            best_dict = aruco_dict
-            best_corners = corners
-            best_ids = ids
-    params=[]
-    if best_corners is not None:
-        for (markerCorner, markerID) in zip(best_corners, best_ids):
-            params.append(corners2center(markerCorner, markerID))
-        for X,Y,ID in params:
-            if image_show:
-                cv2.circle(image, (X, Y), 1, (0, 0, 255), -1)
-                cv2.putText(image, str(ID), (X, Y - 100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5)
-            if position:
-                cv2.circle(image, (X, Y), 5, (0, 128, 0), -1)
+# def auto_detect_aruco(image_path,image_show,position):
+#     try:
+#         image = cv2.imread(image_path)
+#         print("xxxx")
+#     except:
+#         print("=====")
+#         image = image_path
+#     best_dict = None
+#     best_corners = None
+#     best_ids = None
+#     max_detected = 0
+#     aruco_dicts = [
+#         aruco.DICT_4X4_50, aruco.DICT_4X4_100, aruco.DICT_4X4_250, aruco.DICT_4X4_1000,
+#         aruco.DICT_5X5_50, aruco.DICT_5X5_100, aruco.DICT_5X5_250, aruco.DICT_5X5_1000,
+#         aruco.DICT_6X6_50, aruco.DICT_6X6_100, aruco.DICT_6X6_250, aruco.DICT_6X6_1000,
+#         aruco.DICT_7X7_50, aruco.DICT_7X7_100, aruco.DICT_7X7_250, aruco.DICT_7X7_1000,
+#         aruco.DICT_ARUCO_ORIGINAL
+#     ]
+#     for dict_type in aruco_dicts:
+#         aruco_dict = aruco.getPredefinedDictionary(dict_type)
+#         parameters = aruco.DetectorParameters()
+#         corners, ids, _ = aruco.detectMarkers(image, aruco_dict, parameters=parameters)
+#         if ids is not None and len(ids) > max_detected:
+#             max_detected = len(ids)
+#             best_dict = aruco_dict
+#             best_corners = corners
+#             best_ids = ids
+#     params=[]
+#     if best_corners is not None:
+#         for (markerCorner, markerID) in zip(best_corners, best_ids):
+#             params.append(corners2center(markerCorner, markerID))
+#         for X,Y,ID in params:
+#             if image_show:
+#                 cv2.circle(image, (X, Y), 1, (0, 0, 255), -1)
+#                 cv2.putText(image, str(ID), (X, Y - 100), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 255), 5)
+#             if position:
+#                 cv2.circle(image, (X, Y), 5, (0, 128, 0), -1)
 
 
     return image, params
@@ -238,94 +238,95 @@ def ref_marker_pos(channel):
     cap.release()
     cv2.destroyAllWindows()
 
-def positioning(img_real, center_ref,id_ref,avarage_x_ref,avarage_y_ref,avarage_distance_ref, camera_matrix):
-    try:
-        img, param = auto_detect_aruco(img_real, False, True)
-        params1 = np.array(param)
-        coordinates_real, id_real = params1[:, 0:2], params1[:, 2]
-        common_elements = np.intersect1d(id_real, id_ref)
-        list_points_real=[]
-        for selected in common_elements:
-            idx1 = np.where(id_ref == selected)[0][0]
-            idx2 = np.where(id_real == selected)[0][0]
-            x1,y1 = center_ref[idx1]
-            x2,y2 = coordinates_real[idx2]
-            list_points_real.append([x2,y2])
-            cv2.circle(img_real, (x1, y1), 20, (0, 0, 255), 2)
-            #cv2.circle(img_real, (x2, y2), 20, (255, 0, 255), -2)
-            cv2.line(img_real,(x1,y1),(x2,y2),(225,105,65),2)
-        if len(list_points_real)>0:
-            avarage_x_real = average_pairwise_x(list_points_real)
-            avarage_y_real = average_pairwise_y(list_points_real)
-            avarage_distance_real = average_pairwise_distance(list_points_real)
-            diff_x = avarage_x_real - avarage_x_ref
-            diff_y = avarage_y_real - avarage_y_ref
-            diff = avarage_distance_real - avarage_distance_ref
-            dist_min,dist_max = -30,30
-            x_min,x_max = -30,30
-            y_min,y_max = -30,30
-            # print(len(list_points_real))
-            # H, _ = cv2.findHomography(np.array(list_points_real), np.array(center_ref))
-            # print(H)
+# def positioning(img_real, center_ref,id_ref,avarage_x_ref,avarage_y_ref,avarage_distance_ref, camera_matrix):
+#     try:
+#         img, param = checking_aruco_markers(img_real, False, True,cv2.aruco.DICT_4X4_100)
+#         #img,param =
+#         params1 = np.array(param)
+#         coordinates_real, id_real = params1[:, 0:2], params1[:, 2]
+#         common_elements = np.intersect1d(id_real, id_ref)
+#         list_points_real=[]
+#         for selected in common_elements:
+#             idx1 = np.where(id_ref == selected)[0][0]
+#             idx2 = np.where(id_real == selected)[0][0]
+#             x1,y1 = center_ref[idx1]
+#             x2,y2 = coordinates_real[idx2]
+#             list_points_real.append([x2,y2])
+#             cv2.circle(img_real, (x1, y1), 20, (0, 0, 255), 2)
+#             #cv2.circle(img_real, (x2, y2), 20, (255, 0, 255), -2)
+#             cv2.line(img_real,(x1,y1),(x2,y2),(225,105,65),2)
+#         if len(list_points_real)>0:
+#             avarage_x_real = average_pairwise_x(list_points_real)
+#             avarage_y_real = average_pairwise_y(list_points_real)
+#             avarage_distance_real = average_pairwise_distance(list_points_real)
+#             diff_x = avarage_x_real - avarage_x_ref
+#             diff_y = avarage_y_real - avarage_y_ref
+#             diff = avarage_distance_real - avarage_distance_ref
+#             dist_min,dist_max = -30,30
+#             x_min,x_max = -30,30
+#             y_min,y_max = -30,30
+#             # print(len(list_points_real))
+#             # H, _ = cv2.findHomography(np.array(list_points_real), np.array(center_ref))
+#             # print(H)
+#
+#             if diff < 0 and not dist_min < diff < dist_max:
+#                 cv2.putText(img_real, "CLOSER", (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+#             if diff > 0 and not dist_min < diff < dist_max:
+#                 cv2.putText(img_real, "Farther", (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+#             if dist_min < diff < dist_max:
+#                 cv2.putText(img_real, "DISTANCE OK", (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+#                 #prawo lewo
+#                 if diff_x > 0 and not x_min < diff_x < x_max:
+#                     cv2.putText(img_real, "TURN LEFT", (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+#                 if diff_x < 0 and not x_min < diff_x < x_max:
+#                     cv2.putText(img_real, "TURN RIGHT", (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+#                 if x_min < diff_x < x_max:
+#                     cv2.putText(img_real, "LEFT AND RIGHT OK", (400, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0),
+#                                 2)
+#                     if diff_y < 0 and not y_min < diff_y < y_max:
+#                         cv2.putText(img_real, "UP", (700, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+#                     if diff_y > 0 and not y_min < diff_y < y_max:
+#                         cv2.putText(img_real, "Down", (700, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+#                     if y_min < diff_y < y_max:
+#                         cv2.putText(img_real, "UP AND DOWN OK", (700, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0),
+#                                     2)
+#             H, _ = cv2.findHomography(np.array(list_points_real), np.array(center_ref))
+#             if H is not None:
+#                 valid, Rs, Ts, Ns = cv2.decomposeHomographyMat(H, camera_matrix)
+#                 if valid > 0:
+#                     R = Rs[0]
+#                     pitch, yaw, roll = rotationMatrixToEulerAngles(R)
+#                     # if roll < 5:
+#                     #     cv2.putText(img_real, "ROTATE LEFT", (100, 400), cv2.FONT_HERSHEY_SIMPLEX, 1,
+#                     #                 (255, 0, 255),
+#                     #                 2)
+#                     # if roll > -10:
+#                     #     cv2.putText(img_real, "ROTATE RIGHT", (100, 400), cv2.FONT_HERSHEY_SIMPLEX, 1,
+#                     #                 (255, 0, 255),2)
+#         return img_real
+#     finally:
+#         return img_real
 
-            if diff < 0 and not dist_min < diff < dist_max:
-                cv2.putText(img_real, "CLOSER", (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-            if diff > 0 and not dist_min < diff < dist_max:
-                cv2.putText(img_real, "Farther", (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-            if dist_min < diff < dist_max:
-                cv2.putText(img_real, "DISTANCE OK", (100, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-                #prawo lewo
-                if diff_x > 0 and not x_min < diff_x < x_max:
-                    cv2.putText(img_real, "TURN LEFT", (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-                if diff_x < 0 and not x_min < diff_x < x_max:
-                    cv2.putText(img_real, "TURN RIGHT", (400, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-                if x_min < diff_x < x_max:
-                    cv2.putText(img_real, "LEFT AND RIGHT OK", (400, 300), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0),
-                                2)
-                    if diff_y < 0 and not y_min < diff_y < y_max:
-                        cv2.putText(img_real, "UP", (700, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-                    if diff_y > 0 and not y_min < diff_y < y_max:
-                        cv2.putText(img_real, "Down", (700, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
-                    if y_min < diff_y < y_max:
-                        cv2.putText(img_real, "UP AND DOWN OK", (700, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0),
-                                    2)
-            H, _ = cv2.findHomography(np.array(list_points_real), np.array(center_ref))
-            if H is not None:
-                valid, Rs, Ts, Ns = cv2.decomposeHomographyMat(H, camera_matrix)
-                if valid > 0:
-                    R = Rs[0]
-                    pitch, yaw, roll = rotationMatrixToEulerAngles(R)
-                    # if roll < 5:
-                    #     cv2.putText(img_real, "ROTATE LEFT", (100, 400), cv2.FONT_HERSHEY_SIMPLEX, 1,
-                    #                 (255, 0, 255),
-                    #                 2)
-                    # if roll > -10:
-                    #     cv2.putText(img_real, "ROTATE RIGHT", (100, 400), cv2.FONT_HERSHEY_SIMPLEX, 1,
-                    #                 (255, 0, 255),2)
-        return img_real
-    finally:
-        return img_real
-
-def camera_positioning(center_ref,id_ref,width,height,avarage_x_ref,avarage_y_ref,avarage_distance_ref, camera_matrix):
-    cap = cv2.VideoCapture(0)
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, int(width))
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, int(height))
-    if not cap.isOpened():
-        print("Błąd: Nie udało się otworzyć kamery.")
-        exit()
-    while True:
-        ret, frame = cap.read()
-        f_aruco = frame.copy()
-        f_aruco= positioning(f_aruco, center_ref,id_ref,avarage_x_ref,avarage_y_ref,avarage_distance_ref, camera_matrix)
-        if not ret:
-            print("Błąd: Nie udało się pobrać klatki.")
-            break
-        cv2.imshow('Kamera USB', f_aruco)
-        key = cv2.waitKey(1) & 0xFF
-        if key == ord('s'):
-            filename = str(time.time())
-            cv2.imwrite(filename + '.jpg', f_aruco)
-        elif key == ord('q'):
-            break
-    cap.release()
-    cv2.destroyAllWindows()
+# def camera_positioning(center_ref,id_ref,width,height,avarage_x_ref,avarage_y_ref,avarage_distance_ref, camera_matrix):
+#     cap = cv2.VideoCapture(0)
+#     cap.set(cv2.CAP_PROP_FRAME_WIDTH, int(width))
+#     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, int(height))
+#     if not cap.isOpened():
+#         print("Błąd: Nie udało się otworzyć kamery.")
+#         exit()
+#     while True:
+#         ret, frame = cap.read()
+#         f_aruco = frame.copy()
+#         f_aruco= positioning(f_aruco, center_ref,id_ref,avarage_x_ref,avarage_y_ref,avarage_distance_ref, camera_matrix)
+#         if not ret:
+#             print("Błąd: Nie udało się pobrać klatki.")
+#             break
+#         cv2.imshow('Kamera USB', f_aruco)
+#         key = cv2.waitKey(1) & 0xFF
+#         if key == ord('s'):
+#             filename = str(time.time())
+#             cv2.imwrite(filename + '.jpg', f_aruco)
+#         elif key == ord('q'):
+#             break
+#     cap.release()
+#     cv2.destroyAllWindows()

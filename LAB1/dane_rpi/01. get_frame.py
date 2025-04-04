@@ -6,18 +6,21 @@ import os
 
 #os.mkdir('kalibracja')
 #os.mkdir('kalibracja/left')
-if not os.path.exists('kalibracja/right'):
+if not os.path.exists('kalibracja/right'): 
     os.makedirs('kalibracja/right')
-if not os.path.exists('kalibracja/left'):
+if not os.path.exists('kalibracja/left'): 
     os.makedirs('kalibracja/left')
 w,h = 3280,2464
 
 picam2 = Picamera2()
 pprint(picam2.sensor_modes)
+#mode = picam2.sensor_modes[2]
 camera_config = picam2.create_preview_configuration(raw=picam2.sensor_modes[7])
 capture_config = picam2.create_still_configuration(raw=picam2.sensor_modes[7])
 
 picam2.configure(camera_config)
+#capture_config = picam2.create_still_configuration(main={"size":mode[0]})
+#capture_config = picam2.preview_configuration(preview})
 picam2.configure(capture_config)
 picam2.start()
 print("Podgląd włączony. Naciśnij 's', aby zrobić zdjęcie. Naciśnij 'q', aby wyjść.")
@@ -26,7 +29,7 @@ licz=0
 while True:
     frame = picam2.capture_array()  # Pobranie klatki podglądu
     frame = cv2.cvtColor(frame,cv2.COLOR_BGR2RGB)
-    resized = cv2.resize(frame,(0,0),fx=0.5,fy=0.25)
+    resized = cv2.resize(frame,(0,0),fx=0.5,fy=0.25) 
     cv2.imshow("Podgląd kamery", resized)  # Wyświetlenie obrazu
     key = cv2.waitKey(1) & 0xFF  # Czekanie na klawisz
     if key == ord('s'):  # Jeśli naciśniesz 's', zapisuje zdjęcie
