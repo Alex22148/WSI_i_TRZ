@@ -3,7 +3,7 @@
 #======= IDS ========
 from LAB2.ArUco.aruco_lib import *
 import LAB2.ArUco.aruco_lib as al
-from pyueye import ueye
+from pyueye import ueye # pip install pyueye~=4.96.952
 
 mem_ptr, width, height, bitspixel, lineinc,hcam = init_camera()
 while True:
