@@ -74,7 +74,7 @@ W tej części ćwiczenia dodatkowym zbiorem obrazów będą zdjęcia butów, kt
 
 * **Etykietowanie obrazów**
 Do etykietowania obrazów w ćwiczeniu będzie wykorzystywany program "labelImg", który w całości znajduje się pod tym linkiem: <br>
-* https://github.com/HumanSignal/labelImg - na stronie znajduje się szczegółowa instrukcja jak korzystać z aplikacji <br>
+* "github.com/HumanSignal/labelImg" - na stronie znajduje się szczegółowa instrukcja jak korzystać z aplikacji <br>
 Na potrzeby ćwiczenia będą wykorzystywane najbardziej podstawowe funkcjonalności. 
 narzędzie do etykietowania uruchamiane jest za pomocą skryptu 
 * ***LAB3/ML/labelImg/labelImg.py***
