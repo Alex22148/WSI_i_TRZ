@@ -8,7 +8,6 @@ if __name__ == '__main__':
 
     # Automatyczne wykrywanie GPU
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-
     model.to(device)
     start = time.time()
     # # Tuning hiperparametrów - Automatyczne dostosowywanie
